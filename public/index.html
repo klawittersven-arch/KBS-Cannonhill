@@ -10,7 +10,7 @@
 <body class="start">
   <main>
     <h1 class="logo">KBS-Cannonhill</h1>
-    <p class="tipp">Netztest für das Klassen-Turnier · <a href="/probe">Probespiel auf einem Gerät</a></p>
+    <p class="tipp">Klassen-Turnier: Netztest und Probespiel</p>
     <div class="start-raster">
       <section class="karte">
         <h2>Ich spiele mit</h2>
@@ -26,9 +26,21 @@
         <p>Öffnet einen Raum mit QR-Code für den Beamer.</p>
         <a class="knopf" href="/beamer">Beamer-Ansicht öffnen</a>
       </section>
+      <section class="karte probe-karte">
+        <h2>Probespiel</h2>
+        <p>Das Spiel auf einem Gerät ausprobieren. Mit dem Handy den Code scannen – am besten quer halten.</p>
+        <div id="probe-qr" class="qr klein"></div>
+        <a class="knopf" href="/probe">Hier öffnen</a>
+      </section>
     </div>
   </main>
   <script type="module">
+    import { qrcode } from '/js/vendor/qrcode.mjs';
+    const qr = qrcode(0, 'M');
+    qr.addData(`${location.origin}/probe`);
+    qr.make();
+    document.getElementById('probe-qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true, alt: 'QR-Code zum Probespiel' });
+
     document.getElementById('code-form').addEventListener('submit', (ereignis) => {
       ereignis.preventDefault();
       const code = document.getElementById('code').value.trim();

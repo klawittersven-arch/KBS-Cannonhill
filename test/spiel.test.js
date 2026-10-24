@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Spiel, zufallsgenerator } from '../public/js/spiel/spiel.js';
 import {
-  BREITE, KANONE, LUFT, SCHNEE, STEIN, MAX_LEBENSENERGIE, M_RAKETE, M_STEIN, M_SCHILD, BILDER_PRO_SEKUNDE, BILDER_PRO_TAKT,
+  BREITE, HOEHE, KANONE, LUFT, SCHNEE, STEIN, MAX_LEBENSENERGIE, M_RAKETE, M_STEIN, M_SCHILD, BILDER_PRO_SEKUNDE, BILDER_PRO_TAKT,
 } from '../public/js/spiel/regeln.js';
 
 const spieler = (n) => Array.from({ length: n }, (_, i) => ({ nr: i + 1, name: `S${i + 1}` }));
@@ -47,10 +47,10 @@ test('verschiedene Startwerte ergeben verschiedene Landschaften', () => {
 test('Landschaft: Schnee oben, Stein unten, Panzer stehen auf der Oberfläche', () => {
   const spiel = new Spiel({ seed: 5, spieler: spieler(8) });
   const { welt } = spiel;
-  for (const x of [0, 100, 320, 639]) {
+  for (const x of [0, 100, BREITE / 2, BREITE - 1]) {
     const y = welt.oberflaeche(x);
     assert.equal(welt.artBei(x, y), SCHNEE);
-    assert.equal(welt.artBei(x, 479), STEIN);
+    assert.equal(welt.artBei(x, HOEHE - 1), STEIN);
   }
   for (const p of spiel.panzer) {
     assert.equal(welt.artBei(p.x, p.y), LUFT);

@@ -204,7 +204,7 @@ function aktualisiereSteuerung() {
     const nr = Number(knopf.dataset.mun);
     const anzahl = p.lager[nr];
     knopf.querySelector('.munzahl').textContent = anzahl === -1 ? '∞' : anzahl;
-    knopf.disabled = anzahl === 0;
+    knopf.hidden = anzahl === 0; // leere Munition ausblenden (der Ballon kann neue bringen)
     knopf.classList.toggle('gewaehlt', nr === gewaehlt);
   }
   if (spiel.salveAbstand != null) {

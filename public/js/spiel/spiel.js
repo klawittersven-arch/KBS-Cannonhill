@@ -8,10 +8,10 @@
 // Anzeige (zeichner.js) aus den Ereignissen.
 
 import {
-  BREITE, HOEHE, BEREICHE, BEREICH_B, BEREICH_H, G, T, IMPULSABGABE, HIMMELHOEHE, MAX_HIMMELPIXEL,
+  BREITE, HOEHE, BEREICHE_X, BEREICHE_Y, BEREICH_B, BEREICH_H, G, T, IMPULSABGABE, HIMMELHOEHE, MAX_HIMMELPIXEL,
   MAX_MUN, MAX_SCHUSSENERGIE, MAX_LEBENSENERGIE, MAGNETKONSTANTE, BALLON_ZUFALL, MAX_SPIELER,
   BILDER_PRO_SEKUNDE, BILDER_PRO_TAKT, PANZER_B, PANZER_H, MUN_B, MUN_H, BALLON_B, BALLON_H,
-  SALVE_SEKUNDEN, START_KRAFT,
+  SALVE_SEKUNDEN, START_KRAFT, SCHUSS_TEILER,
   LUFT, WASSER, SCHNEE, PANZER, MUNITION, SAEURE, ARTEN, MASSE, REIBUNG,
   M_STEIN, M_SCHILD, M_LASER, M_MEDI, M_MAGNET, M_MAGRAKETE, M_MEGA, M_SCHNEEBALL, M_SPLITTER,
   M_RAKETE, M_GRANATE, M_FASS, MUN_ANZAHL, MUNITIONEN,
@@ -60,7 +60,7 @@ export class Spiel {
    * @param {number|null} [o.salve]  alle so viele Sekunden feuern alle gemeinsam (null = jeder feuert selbst)
    * @param {object|null} [o.steinTextur]  nur für die Farben
    */
-  constructor({ seed, spieler, wind = true, wetter = true, suddenDeath = 120, ende = 130, salve = SALVE_SEKUNDEN, steinTextur = null }) {
+  constructor({ seed, spieler, wind = false, wetter = false, suddenDeath = 120, ende = 130, salve = SALVE_SEKUNDEN, steinTextur = null }) {
     if (spieler.length < 1 || spieler.length > MAX_SPIELER) throw new Error('1 bis 8 Spieler');
     this.zufall = zufallsgenerator(seed);
     this.welt = new Welt(steinTextur);
@@ -613,9 +613,9 @@ export class Spiel {
     schaden.fill(0);
     const lebensdauerZaehlt = this.bild % 3 === 0;
 
-    for (let bi = 0; bi < BEREICHE; bi++) {
-      for (let bj = 0; bj < BEREICHE; bj++) {
-        if (bereichZahl[bi * BEREICHE + bj] === 0) continue;
+    for (let bi = 0; bi < BEREICHE_X; bi++) {
+      for (let bj = 0; bj < BEREICHE_Y; bj++) {
+        if (bereichZahl[bi * BEREICHE_Y + bj] === 0) continue;
         const x0 = bi * BEREICH_B;
         const y0 = bj * BEREICH_H;
         for (let x = x0; x < x0 + BEREICH_B; x++) {
@@ -843,9 +843,8 @@ export class Spiel {
         const s = this.freierPlatz();
         if (s >= 0) {
           p.schussAktiv = true;
-          const teiler = MAX_SCHUSSENERGIE / 4;
           this.belegePlatz(this.mun[s], mun, p.x + p.kx, p.y + p.ky,
-            Math.trunc((p.kx * p.schussEnergie) / teiler), Math.trunc((p.ky * p.schussEnergie) / teiler), i);
+            Math.trunc((p.kx * p.schussEnergie) / SCHUSS_TEILER), Math.trunc((p.ky * p.schussEnergie) / SCHUSS_TEILER), i);
         }
       }
       if (lager[mun] !== -1) lager[mun]--;

@@ -1,10 +1,19 @@
 // Spielwerte aus dem Original (panzer.h und InitStructs in panzer.cpp von Dirk Plate).
 
-export const BREITE = 640;
-export const HOEHE = 480;
-export const BEREICHE = 32; // das Feld ist für die aktiven Pixel in 32×32 Bereiche geteilt
-export const BEREICH_B = BREITE / BEREICHE;
-export const BEREICH_H = HOEHE / BEREICHE;
+// Spielfeld: Original 640×480. Fürs Handy kleiner und im Breitformat – Panzer und
+// Krater wirken dadurch größer, auf dem Beamer genau 5-fach vergrößert (1920×1080).
+export const BREITE = 384;
+export const HOEHE = 216;
+// Für die aktiven Pixel ist das Feld in Bereiche geteilt (Original 32×32)
+export const BEREICHE_X = 32;
+export const BEREICHE_Y = 24;
+export const BEREICH_B = BREITE / BEREICHE_X;
+export const BEREICH_H = HOEHE / BEREICHE_Y;
+
+// Landschaft: im Original zwischen y = 100 und y = 430 bei 480 Pixeln Höhe
+export const BERG_OBEN = Math.round((100 * HOEHE) / 480);
+export const BERG_UNTEN = HOEHE - Math.round((50 * HOEHE) / 480);
+export const RAND_STREUUNG = Math.round((200 * HOEHE) / 480);
 
 export const G = 9.81; // Erdanziehung
 export const T = 0.08; // Zeit pro Physikschritt
@@ -17,6 +26,9 @@ export const HIMMELHOEHE = 470; // so viele Pixel werden oberhalb des Bildes wei
 export const MAX_HIMMELPIXEL = 500;
 export const MAX_MUN = 100; // so viele Geschosse können gleichzeitig fliegen
 export const MAX_SCHUSSENERGIE = 50;
+// Geschwindigkeit = Kanone · Kraft / SCHUSS_TEILER. Original 12 (= 50 / 4) für 640 Pixel;
+// mit 15 reicht volle Kraft auf dem kleineren Feld etwa einmal quer hinüber.
+export const SCHUSS_TEILER = 15;
 export const MAX_LEBENSENERGIE = 500; // Original 1000 – halbiert für kürzere Partien
 export const SALVE_SEKUNDEN = 3; // alle 3 Sekunden feuern alle Panzer gleichzeitig
 export const START_KRAFT = 30;

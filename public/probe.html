@@ -11,7 +11,7 @@
 <body class="probe">
   <div class="probe-raster">
     <div class="spielflaeche">
-      <canvas id="spiel" width="640" height="480" aria-label="Spielfeld"></canvas>
+      <canvas id="spiel" width="384" height="216" aria-label="Spielfeld"></canvas>
       <div id="ende" class="ende-anzeige" hidden>
         <div class="pokal" aria-hidden="true">🏆</div>
         <p id="ende-text"></p>
@@ -71,8 +71,8 @@
         </select>
       </label>
       <label class="haken"><input id="opt-computer" type="checkbox" checked> Andere Panzer steuert der Computer</label>
-      <label class="haken"><input id="opt-wind" type="checkbox" checked> Wind</label>
-      <label class="haken"><input id="opt-wetter" type="checkbox" checked> Wetter (Regen oder Schnee)</label>
+      <label class="haken"><input id="opt-wind" type="checkbox"> Wind</label>
+      <label class="haken"><input id="opt-wetter" type="checkbox"> Wetter (Regen oder Schnee)</label>
       <label class="haken"><input id="opt-sudden" type="checkbox" checked> Nach 2 Minuten Sudden Death</label>
       <button value="start">Los geht's</button>
     </form>

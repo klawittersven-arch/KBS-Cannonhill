@@ -6,8 +6,8 @@
 // des einzelnen Geräts und zählen nicht zur Prüfsumme.
 
 import {
-  BREITE, HOEHE, BEREICHE, BEREICH_B, BEREICH_H, LUFT, GRAS, STEIN, SCHNEE, ERDE,
-  SCHNEEDICKE, GRASDICKE, ERDDICKE, FARBE, FARBSTREUUNG,
+  BREITE, HOEHE, BEREICHE_Y, BEREICH_B, BEREICH_H, LUFT, GRAS, STEIN, SCHNEE, ERDE,
+  SCHNEEDICKE, GRASDICKE, ERDDICKE, FARBE, FARBSTREUUNG, BERG_OBEN, BERG_UNTEN, RAND_STREUUNG, BEREICHE_X,
 } from './regeln.js';
 
 const N = BREITE * HOEHE;
@@ -29,7 +29,7 @@ export class Welt {
     this.bx = new Float64Array(N); // Zusatzbeschleunigung (z. B. durch Explosionen)
     this.by = new Float64Array(N);
     this.leben = new Int32Array(N).fill(-1);
-    this.bereichZahl = new Int32Array(BEREICHE * BEREICHE); // aktive Pixel je Bereich
+    this.bereichZahl = new Int32Array(BEREICHE_X * BEREICHE_Y); // aktive Pixel je Bereich
 
     // Nur für die Anzeige
     this.farbe = new Uint32Array(N);
@@ -59,7 +59,7 @@ export class Welt {
   aktiviere(x, y, an) {
     if (x < 0 || x >= BREITE || y < 0 || y >= HOEHE) return;
     const p = y * BREITE + x;
-    const b = ((x / BEREICH_B) | 0) * BEREICHE + ((y / BEREICH_H) | 0);
+    const b = ((x / BEREICH_B) | 0) * BEREICHE_Y + ((y / BEREICH_H) | 0);
     if (an) {
       if (!this.aktiv[p]) {
         this.aktiv[p] = 1;
@@ -217,16 +217,23 @@ export class Welt {
     return HANG_SCHRAEG;
   }
 
-  /** Compute(): Gebirge durch fortgesetztes Halbieren mit zufälligem Versatz. */
+  /**
+   * Compute(): Gebirge durch fortgesetztes Halbieren mit zufälligem Versatz.
+   * Halbiert wird, solange alle Abschnitte mindestens 2 Pixel breit sind –
+   * beim Original-Feld ergibt das genau dessen 513 Punkte.
+   */
   erzeugeLandschaft(zufall) {
-    const px = new Int32Array(1026);
-    const py = new Int32Array(1026);
+    const px = new Int32Array(2 * BREITE + 2);
+    const py = new Int32Array(2 * BREITE + 2);
     px[1] = 0;
-    py[1] = HOEHE - (zufall() % 200) - 1;
+    py[1] = HOEHE - (zufall() % RAND_STREUUNG) - 1;
     px[2] = BREITE - 1;
-    py[2] = HOEHE - (zufall() % 200) - 1;
+    py[2] = HOEHE - (zufall() % RAND_STREUUNG) - 1;
     let anzahl = 2;
     for (;;) {
+      let schmalster = Infinity;
+      for (let i = 1; i < anzahl; i++) schmalster = Math.min(schmalster, px[i + 1] - px[i]);
+      if (schmalster < 2) break;
       for (let i = anzahl; i >= 2; i--) {
         px[2 * i - 1] = px[i];
         py[2 * i - 1] = py[i];
@@ -237,11 +244,10 @@ export class Welt {
         px[2 * i] = (px[2 * i - 1] + px[2 * i + 1]) >> 1;
         if (i === 1) py[2 * i] = mitte - rest(zufall(), abstand >> 1);
         else py[2 * i] = mitte - rest(zufall(), abstand) + (abstand >> 1);
-        if (py[2 * i] > HOEHE - 50) py[2 * i] = HOEHE - 50;
-        if (py[2 * i] < 100) py[2 * i] = 100;
+        if (py[2 * i] > BERG_UNTEN) py[2 * i] = BERG_UNTEN;
+        if (py[2 * i] < BERG_OBEN) py[2 * i] = BERG_OBEN;
       }
       anzahl = 2 * anzahl - 1;
-      if (2 * anzahl - 1 > 1000) break;
     }
 
     let i = 2;

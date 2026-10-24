@@ -61,7 +61,7 @@ export class Zeichner {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.bilder = bilder;
-    this.namenPx = optionen.namenPx ?? 11;
+    this.namenPx = optionen.namenPx ?? 8;
     this.eigeneNr = optionen.eigeneNr ?? null;
 
     this.boden = leinwand(BREITE, HOEHE);
@@ -77,6 +77,7 @@ export class Zeichner {
     this.altePixel = [];
 
     this.panzerBilder = this.baueFarbpanzer();
+    this.munitionsBilder = SPIELERFARBEN.map((farbe) => this.baueFarbmunition(farbe));
     this.fetzDaten = {
       panzer: [0, 1, 2, 3].map((spalte) => [0, 1, 2].map((v) => pixelDaten(bilder.panzer, spalte * PANZER_B, v * PANZER_H, PANZER_B, PANZER_H))),
       mun: MUNITIONEN.map((m) => pixelDaten(bilder.munition, m.bild * MUN_B, 0, MUN_B, MUN_H)),
@@ -113,11 +114,31 @@ export class Zeichner {
     return liste;
   }
 
+  /**
+   * Geschossbilder in Spielerfarbe: graue Teile (Kanonenkugel, Raketenkörper) werden
+   * eingefärbt, farbige Details bleiben – so erkennt man Waffe und Schützen.
+   */
+  baueFarbmunition(ziel) {
+    const { width: b, height: h } = this.bilder.munition;
+    const d = pixelDaten(this.bilder.munition, 0, 0, b, h);
+    for (let p = 0; p < d.data.length; p += 4) {
+      const [r, g, bl, a] = [d.data[p], d.data[p + 1], d.data[p + 2], d.data[p + 3]];
+      if (a === 0 || Math.abs(r - g) > 40 || Math.abs(r - bl) > 40) continue;
+      const faktor = 0.45 + 0.75 * (Math.max(r, g, bl) / 255);
+      d.data[p] = Math.min(255, ziel[0] * faktor);
+      d.data[p + 1] = Math.min(255, ziel[1] * faktor);
+      d.data[p + 2] = Math.min(255, ziel[2] * faktor);
+    }
+    const c = leinwand(b, h);
+    c.getContext('2d').putImageData(d, 0, 0);
+    return c;
+  }
+
   /** Auflösung an die angezeigte Größe anpassen (scharfe Schrift auch auf dem Beamer). */
   passeGroesseAn() {
     const rect = this.canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    const massstab = Math.max(1, Math.min(4, Math.ceil(((rect.width || BREITE) * dpr) / BREITE)));
+    const massstab = Math.max(1, Math.min(8, Math.ceil(((rect.width || BREITE) * dpr) / BREITE)));
     if (this.canvas.width !== BREITE * massstab) {
       this.canvas.width = BREITE * massstab;
       this.canvas.height = HOEHE * massstab;
@@ -250,7 +271,10 @@ export class Zeichner {
     const s = this.massstab;
     ctx.setTransform(s, 0, 0, s, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(this.bilder.himmel[spiel.himmel % 3], 0, 0, BREITE, HOEHE);
+    // Himmelsbilder sind 640×480: davon ein Ausschnitt im Seitenverhältnis des Feldes
+    const himmel = this.bilder.himmel[spiel.himmel % 3];
+    const ausschnittH = (himmel.width * HOEHE) / BREITE;
+    ctx.drawImage(himmel, 0, (himmel.height - ausschnittH) / 2, himmel.width, ausschnittH, 0, 0, BREITE, HOEHE);
     ctx.drawImage(this.boden, 0, 0);
     ctx.drawImage(this.fx, 0, 0);
 
@@ -363,22 +387,24 @@ export class Zeichner {
         continue;
       }
       const spalte = MUNITIONEN[m.typ].bild;
-      ctx.drawImage(this.bilder.munition, spalte * MUN_B, richtung(m.vx, m.vy) * MUN_H, MUN_B, MUN_H, m.x - MUN_B / 2, m.y - MUN_H / 2, MUN_B, MUN_H);
+      const schuetze = spiel.panzer[m.besitzer];
+      const bogen = schuetze ? this.munitionsBilder[schuetze.bildNr] : this.bilder.munition;
+      ctx.drawImage(bogen, spalte * MUN_B, richtung(m.vx, m.vy) * MUN_H, MUN_B, MUN_H, m.x - MUN_B / 2, m.y - MUN_H / 2, MUN_B, MUN_H);
     }
   }
 
   zeichneAnzeige(spiel) {
     const ctx = this.ctx;
     // Wind (WINDHOSE: Zeile = Wind + 3)
-    ctx.drawImage(this.bilder.wind, 0, (spiel.wind + 3) * 8, 36, 8, 4, 4, 36, 8);
+    if (spiel.wind !== 0) ctx.drawImage(this.bilder.wind, 0, (spiel.wind + 3) * 8, 36, 8, 3, 3, 36, 8);
 
     // Zeit bis zur nächsten Salve als Balken oben
     if (spiel.salveAbstand && spiel.phase === 'laeuft') {
       const anteil = 1 - spiel.bilderBisSalve / spiel.salveAbstand;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.fillRect(0, HOEHE - 3, BREITE, 3);
+      ctx.fillRect(0, HOEHE - 2, BREITE, 2);
       ctx.fillStyle = '#ff922b';
-      ctx.fillRect(0, HOEHE - 3, BREITE * anteil, 3);
+      ctx.fillRect(0, HOEHE - 2, BREITE * anteil, 2);
     }
     if (performance.now() < this.blitzBis) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
@@ -386,10 +412,10 @@ export class Zeichner {
     }
 
     // Spielzeit
-    ctx.font = '700 12px system-ui, sans-serif';
+    ctx.font = '700 9px system-ui, sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
     let text;
     let farbe = '#fff';
@@ -401,9 +427,9 @@ export class Zeichner {
       text = `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}`;
     }
     if (text && spiel.phase === 'laeuft') {
-      ctx.strokeText(text, BREITE - 5, 4);
+      ctx.strokeText(text, BREITE - 3, 3);
       ctx.fillStyle = farbe;
-      ctx.fillText(text, BREITE - 5, 4);
+      ctx.fillText(text, BREITE - 3, 3);
     }
   }
 }
