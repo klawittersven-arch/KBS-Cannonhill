@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eef3f7">
+  <title>KBS-Cannonhill · Netztest</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/stil.css">
+</head>
+<body class="handy">
+  <main>
+    <header class="kopf">
+      <span class="logo">KBS-Cannonhill</span>
+      <span id="raum-anzeige"></span>
+      <span id="verbindung" class="punkt" title="Verbindung"></span>
+    </header>
+
+    <section id="anmeldung" hidden>
+      <h1>Mitmachen</h1>
+      <form id="anmelde-form" class="karte" novalidate>
+        <label id="raum-feld">Raumcode
+          <input id="feld-raum" inputmode="numeric" maxlength="4" autocomplete="off">
+        </label>
+        <label>Vorname
+          <input id="feld-vorname" maxlength="15" autocomplete="given-name" autocapitalize="words" spellcheck="false">
+        </label>
+        <label>Erster Buchstabe deines Nachnamens
+          <input id="feld-initial" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        </label>
+        <p id="anmelde-fehler" class="fehler" role="alert"></p>
+        <button type="submit">Los geht's</button>
+      </form>
+    </section>
+
+    <section id="lobby" hidden>
+      <h1>Hallo <span class="mein-name"></span>!</h1>
+      <p class="gross" id="lobby-text">Du bist drin. Schau auf den Beamer – gleich startet der Test.</p>
+      <dl class="werte">
+        <div><dt>Verbindung</dt><dd id="lobby-ping">–</dd></div>
+        <div><dt>Gerätetest</dt><dd id="lobby-bench">läuft …</dd></div>
+      </dl>
+      <p class="tipp">Lass diese Seite offen und das Handy entsperrt.</p>
+    </section>
+
+    <section id="test" hidden>
+      <div class="testkopf">
+        <strong id="gruppenname"></strong>
+        <span id="countdown" class="countdown"></span>
+      </div>
+      <ul id="mitglieder" class="mitglieder"></ul>
+      <canvas id="landschaft" width="320" height="200" aria-label="Landschaft deiner Gruppe"></canvas>
+      <p class="tipp">Tippe auf die Landschaft, um zu schießen. Bei allen in deiner Gruppe passiert gleichzeitig dasselbe – vergleicht eure Handys!</p>
+      <dl class="werte">
+        <div><dt>Ping</dt><dd id="test-ping">–</dd></div>
+        <div><dt>Verzögerung</dt><dd id="test-verz">–</dd></div>
+        <div><dt>Bilder/s</dt><dd id="test-fps">–</dd></div>
+      </dl>
+    </section>
+
+    <section id="fertig" hidden>
+      <h1>Geschafft – danke!</h1>
+      <p class="ampel-gross"><span id="fertig-punkt" class="punkt"></span><span id="fertig-text"></span></p>
+      <dl class="werte" id="fertig-werte"></dl>
+      <p class="tipp">Lass die Seite offen, falls noch ein Durchgang kommt.</p>
+    </section>
+
+    <section id="meldung" hidden>
+      <h1 id="meldung-titel"></h1>
+      <p id="meldung-text" class="gross"></p>
+    </section>
+  </main>
+  <script type="module" src="/js/netztest-handy.js"></script>
+</body>
+</html>

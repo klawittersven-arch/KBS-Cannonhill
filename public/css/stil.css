@@ -670,6 +670,7 @@ body.probe {
   flex: 1;
 }
 
+.steuerpult button.leise,
 body.probe button.leise {
   background: #2c3b4b;
   color: #e9eef3;
@@ -931,4 +932,306 @@ button.feuer {
 .qr.klein svg {
   max-width: 11rem;
   margin: 0.4rem 0 0.8rem;
+}
+
+/* ---------- Handy im Spiel ---------- */
+
+body.handy.im-spiel {
+  background: #17212b;
+  color: #e9eef3;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.spielkopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+}
+
+.meine-farbe {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.meine-farbe::before {
+  content: '';
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--farbe);
+}
+
+.ende-anzeige small {
+  font-size: clamp(0.9rem, 3vmin, 1.2rem);
+  color: #d0d8e0;
+  max-width: 26rem;
+  padding: 0 1rem;
+}
+
+.info-bild {
+  font-size: 4.5rem;
+  line-height: 1;
+  margin: 1.5rem 0 0.5rem;
+}
+
+/* ---------- Turnier am Beamer ---------- */
+
+.steuerung label.haken {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.turnier-ansicht {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.turnier-kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+}
+
+.turnier-kopf h1 {
+  margin: 0;
+  font-size: 2.2rem;
+}
+
+.turnier-kopf p {
+  margin: 0;
+  flex: 1;
+  font-size: 1.2rem;
+  color: var(--gedimmt);
+}
+
+.turnier-kopf .knoepfe {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.finalisten {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.4rem;
+}
+
+.finalisten-titel {
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.finalist {
+  background: #fff3bf;
+  border: 2px solid #fab005;
+  border-radius: 999px;
+  padding: 0.25rem 0.9rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.gruppen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1rem;
+}
+
+.gruppe-karte h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 0.6rem;
+  font-size: 1.4rem;
+}
+
+.gruppe-karte h2 small {
+  font-size: 1rem;
+  color: var(--gedimmt);
+  font-variant-numeric: tabular-nums;
+}
+
+.gruppe-karte.entschieden {
+  outline: 3px solid #fab005;
+}
+
+.mitspieler {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mitspieler li {
+  display: grid;
+  grid-template-columns: auto 1fr 6rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.mitspieler li.raus {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.mitspieler li.sieger {
+  color: #b35c00;
+}
+
+.mitspieler .farbe {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.mitspieler .name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mitspieler .balken {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #dee2e6;
+  overflow: hidden;
+}
+
+.mitspieler .balken span {
+  display: block;
+  height: 100%;
+  background: var(--gut);
+  transition: width 0.5s;
+}
+
+body.vollbild {
+  background: #0b1016;
+  overflow: hidden;
+}
+
+.finale-ansicht {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+#finale {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.finale-titel {
+  position: absolute;
+  top: 0.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 70%);
+  pointer-events: none;
+}
+
+.finale-abbrechen {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  opacity: 0.25;
+}
+
+.finale-abbrechen:hover,
+.finale-abbrechen:focus-visible {
+  opacity: 1;
+}
+
+.finale-ansicht .ende-anzeige {
+  color: #fff;
+}
+
+.sieger-ansicht {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.5rem;
+  background: radial-gradient(circle at 50% 40%, #2b3a4d, #0b1016 70%);
+  color: #fff;
+  text-align: center;
+  overflow: hidden;
+}
+
+.pokal-gross {
+  font-size: 30vmin;
+  line-height: 1;
+  filter: drop-shadow(0 0 2rem rgb(255 212 59 / 50%));
+  animation: pokal 1.2s ease-out;
+}
+
+.sieger-titel {
+  margin: 0;
+  font-size: 4vmin;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ffd43b;
+}
+
+.sieger-name {
+  margin: 0 0 2rem;
+  font-size: 12vmin;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.konfetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.konfetti span {
+  position: absolute;
+  top: -5vh;
+  width: 0.8rem;
+  height: 1.4rem;
+  border-radius: 2px;
+  animation: konfetti linear infinite;
+}
+
+@keyframes konfetti {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+
+@keyframes pokal {
+  from {
+    transform: scale(0.3) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .konfetti span,
+  .pokal-gross {
+    animation: none;
+  }
 }

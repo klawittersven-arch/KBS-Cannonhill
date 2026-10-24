@@ -5,7 +5,9 @@ der Beamer zeigt Lobby, Ergebnisse und das Finale. Grundlage ist das Spiel
 [Cannonhill](https://dplate.de/games/cannonhill) von Dirk Plate.
 
 **Stand:**
-- **Netztest** (`/beamer`, `/handy`): prüft im echten Klassenraum WLAN und Handys.
+- **Turnier** (`/beamer` für die Lehrkraft, `/handy` für die SuS): Lobby mit QR-Code, Qualifying in Gruppen
+  auf den Handys, Finale am Beamer, Siegerehrung.
+- **Netztest** (`/netztest`, `/netztest-handy`): prüft im echten Klassenraum WLAN und Handys.
 - **Spielkern** (`public/js/spiel/`): das Original-Spiel, Bild für Bild nachgebaut und bit-genau
   wiederholbar – Voraussetzung dafür, dass später alle Handys einer Gruppe dasselbe sehen.
 - **Probespiel** (`/probe`): das Spiel auf einem Gerät ausprobieren, 2–8 Panzer, andere auf Wunsch vom Computer.
@@ -22,9 +24,23 @@ der Beamer zeigt Lobby, Ergebnisse und das Finale. Grundlage ist das Spiel
 - Bis zu 8 Panzer (Original: 4); die Panzer zielen zu Beginn schräg zur Feldmitte.
 - Spielfeld 384×216 statt 640×480 (größere Panzer auf dem Handy); Geschosse in der Farbe des Schützen.
 
+## Turnier im Unterricht
+
+1. Am Lehrer-Laptop `https://<adresse>/beamer` öffnen und auf den Beamer legen (Vollbild: F11).
+2. Die SuS scannen den QR-Code und geben Vorname und ersten Buchstaben des Nachnamens ein.
+3. Optional: **Alle Waffen aktivieren**, Wind, Wetter, Einteilung. Dann **Turnier starten**.
+   - 2–8 SuS: alle spielen direkt das Finale am Beamer.
+   - ab 9 SuS: Qualifying in Gruppen à 3–4 auf den Handys; der Beamer zeigt Stand und Gruppensieger.
+4. Sind alle Gruppen entschieden: **Finale starten** – die Gruppensieger spielen, alle schauen auf den Beamer.
+5. Siegerehrung mit Pokal; **Neues Turnier** führt zurück in die Lobby (alle bleiben angemeldet).
+
+Wer zu spät kommt, ist beim nächsten Turnier dabei. Ein Handy, das die Verbindung verliert oder neu
+geladen wird, steigt automatisch wieder in seine Partie ein. Zum Ausprobieren verkürzt
+`/beamer?spielzeit=20` jede Partie auf 20 Sekunden.
+
 ## Netztest im Unterricht
 
-1. Am Lehrer-Laptop `https://<adresse>/beamer` öffnen und auf den Beamer legen.
+1. Am Lehrer-Laptop `https://<adresse>/netztest` öffnen und auf den Beamer legen.
 2. Die SuS scannen den QR-Code und geben Vorname und ersten Buchstaben des Nachnamens ein.
 3. Warten, bis alle Kacheln da sind. Optional: **Raum sperren**.
 4. **Test starten** (60 Sekunden, Einteilung „Automatisch“).
@@ -58,17 +74,21 @@ npm install
 npm run dev        # lokaler Server auf http://localhost:8787
 npm test           # Gruppenregeln, Physik, Eingabeprüfung
 npm run check      # TypeScript-Prüfung des Servers
-npm run last       # 30 simulierte Handys gegen den laufenden Server (ANZAHL, DAUER, BASIS anpassbar)
+npm run last       # Netztest: 30 simulierte Handys gegen den laufenden Server (ANZAHL, DAUER, BASIS)
+npm run turnier    # ganzes Turnier mit 10 rechnenden Handys (ANZAHL, ENDE, BASIS)
 ```
 
 | Pfad | Inhalt |
 |---|---|
-| `server/raum.ts` | Durable Object: Lobby, Beamer-Verbindung, Netztest im 50-ms-Takt |
-| `server/index.ts` | Worker: `/ws/<raumcode>` → Raum, alles andere aus `public/` |
+| `server/turnier.ts` | Durable Object: Turnier – Lobby, Gruppen, Partien im 50-ms-Takt, Ergebnisse, Finale |
+| `server/raum.ts` | Durable Object: Netztest im 50-ms-Takt |
+| `server/index.ts` | Worker: `/spiel/<code>` → Turnier, `/ws/<code>` → Netztest, alles andere aus `public/` |
+| `public/js/spiel/netzspiel.js` | eine Partie im Netz: Takte anwenden, 60 Bilder/s, Aufholen, Wiedereinstieg |
+| `public/js/beamer.js`, `handy.js` | Turnier: Beamer-Ansicht und Spieler-Seite |
 | `public/js/gruppen.js` | Gruppeneinteilung (Server und Beamer) |
 | `public/js/sim.js` | deterministische Mini-Pixelphysik (nur Ganzzahlen) |
 | `public/js/bewertung.js` | Ampel-Grenzen und Empfehlung |
-| `public/js/handy.js`, `beamer.js` | die beiden Oberflächen des Netztests |
+| `public/js/netztest-beamer.js`, `netztest-handy.js` | die beiden Oberflächen des Netztests |
 | `public/js/spiel/regeln.js` | alle Werte des Originals (Materialien, Munition, Kanonenstellungen) |
 | `public/js/spiel/welt.js` | Pixelfeld, Landschaft, Pixel bewegen/löschen, Hangneigung |
 | `public/js/spiel/spiel.js` | eine Partie: Physik, Panzer, Munition, Explosionen, Salven, Sudden Death, Prüfsumme |

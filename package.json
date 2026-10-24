@@ -9,7 +9,8 @@
     "deploy": "wrangler deploy",
     "check": "tsc --noEmit",
     "test": "node --test test/*.test.js",
-    "last": "node test/last.mjs"
+    "last": "node test/last.mjs",
+    "turnier": "node test/turnier.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261024.1",

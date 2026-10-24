@@ -8,15 +8,21 @@
   "workers_dev": true,
   "preview_urls": false,
   // Webseiten (Beamer, Handy) kommen direkt aus public/.
-  // Nur /ws/<raumcode> landet im Worker-Code.
+  // Nur /ws/<raumcode> (Netztest) und /spiel/<raumcode> (Turnier) landen im Worker-Code.
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
   },
   // Ein Durable Object pro Klassenraum: hält alle WebSocket-Verbindungen
-  // und gibt im Netztest den Takt vor.
+  // und gibt den Takt vor (Raum = Netztest, Turnier = das Spiel).
   "durable_objects": {
-    "bindings": [{ "name": "RAUM", "class_name": "Raum" }]
+    "bindings": [
+      { "name": "RAUM", "class_name": "Raum" },
+      { "name": "TURNIER", "class_name": "Turnier" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Raum"] }]
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Raum"] },
+    { "tag": "v2", "new_sqlite_classes": ["Turnier"] }
+  ]
 }

@@ -1,7 +1,12 @@
+// Beamer-Seite der Lehrkraft: Lobby mit QR-Code, Qualifying-Übersicht,
+// Finale im Großformat und Siegerehrung.
+
 import { verbinde, neueId, speicher } from './verbindung.js';
 import { qrcode } from './vendor/qrcode.mjs';
-import { beschreibePlan } from './gruppen.js';
-import { bewerte, empfehlung, median, GRENZEN } from './bewertung.js';
+import { beschreibePlan, planeTurnier } from './gruppen.js';
+import { NetzSpiel } from './spiel/netzspiel.js';
+import { Zeichner, ladeBilder, steinTextur } from './spiel/zeichner.js';
+import { MAX_LEBENSENERGIE, SPIELERFARBEN } from './spiel/regeln.js';
 
 const $ = (id) => document.getElementById(id);
 const RAUM_GUELTIG_MS = 4 * 60 * 60 * 1000;
@@ -10,64 +15,43 @@ let raum = ladeRaum();
 let verbindung = null;
 let stand = null;
 let belegtVersuche = 0;
+let finale = null; // NetzSpiel des Finales
+let zeichner = null;
 let letzteSignatur = '';
-let meldungZeitgeber = null;
+const bilderLaden = ladeBilder().catch(() => null);
 
-// --- Raum ------------------------------------------------------------------
+// --- Raum ------------------------------------------------------------------------------
 
 function ladeRaum() {
   try {
-    const daten = JSON.parse(speicher.lies('kbs-beamer') || 'null');
-    if (daten && /^\d{4}$/.test(daten.code) && typeof daten.token === 'string' && Date.now() - daten.zeit < RAUM_GUELTIG_MS) {
-      return daten;
-    }
+    const d = JSON.parse(speicher.lies('kbs-turnier') || 'null');
+    if (d && /^\d{4}$/.test(d.code) && typeof d.token === 'string' && Date.now() - d.zeit < RAUM_GUELTIG_MS) return d;
   } catch {
-    // dann neuer Raum
+    // neuer Raum
   }
   return neuerRaum();
 }
 
 function neuerRaum() {
-  const daten = { code: String(1000 + Math.floor(Math.random() * 9000)), token: neueId(), zeit: Date.now() };
-  speicher.schreib('kbs-beamer', JSON.stringify(daten));
-  return daten;
+  const d = { code: String(1000 + Math.floor(Math.random() * 9000)), token: neueId(), zeit: Date.now() };
+  speicher.schreib('kbs-turnier', JSON.stringify(d));
+  return d;
 }
 
 function oeffneRaum() {
   verbindung?.beende();
   stand = null;
-  letzteSignatur = '';
+  finale = null;
   zeigeBeitritt();
-  zeichne();
   verbindung = verbinde({
-    pfad: `/ws/${raum.code}`,
+    pfad: `/spiel/${raum.code}`,
     beimOeffnen: () => verbindung.sende({ typ: 'hallo', rolle: 'beamer', token: raum.token }),
     beiNachricht: verarbeite,
     beiStatus: (status, code) => {
       $('verbindung').className = `punkt ${status}`;
-      if (code === 4002) zeigeMeldung('Die Beamer-Ansicht ist jetzt in einem anderen Fenster offen.', true);
+      if (code === 4002) meldung('Die Turnier-Ansicht ist jetzt in einem anderen Fenster offen.', true);
     },
   });
-}
-
-function verarbeite(n) {
-  switch (n.typ) {
-    case 'belegt':
-      // Code gehört schon einer anderen Lehrkraft – einfach einen neuen nehmen.
-      if (++belegtVersuche > 5) return zeigeMeldung('Kein freier Raum gefunden. Bitte Seite neu laden.', true);
-      raum = neuerRaum();
-      return oeffneRaum();
-    case 'willkommen':
-      belegtVersuche = 0;
-      raum.zeit = Date.now();
-      speicher.schreib('kbs-beamer', JSON.stringify(raum));
-      return;
-    case 'stand':
-      stand = n;
-      return zeichne();
-    case 'meldung':
-      return zeigeMeldung(n.text);
-  }
 }
 
 function zeigeBeitritt() {
@@ -80,22 +64,66 @@ function zeigeBeitritt() {
   $('raumcode').textContent = raum.code;
 }
 
-function zeigeMeldung(text, dauerhaft = false) {
-  clearTimeout(meldungZeitgeber);
-  $('meldung').textContent = text;
-  $('meldung').hidden = false;
-  if (!dauerhaft) meldungZeitgeber = setTimeout(() => ($('meldung').hidden = true), 6000);
+function sende(nachricht) {
+  verbindung?.sende(nachricht);
 }
 
-// --- Steuerung ---------------------------------------------------------------
+function meldung(text, dauerhaft = false) {
+  for (const el of document.querySelectorAll('.meldung')) {
+    el.textContent = text;
+    el.hidden = false;
+  }
+  if (!dauerhaft) setTimeout(() => document.querySelectorAll('.meldung').forEach((el) => (el.hidden = true)), 6000);
+}
 
-$('start').addEventListener('click', () => verbindung?.sende({ typ: 'starte', dauer: Number($('dauer').value) }));
-$('stopp').addEventListener('click', () => {
-  if (confirm('Test wirklich abbrechen?')) verbindung?.sende({ typ: 'stoppe' });
-});
-$('modus').addEventListener('change', () => verbindung?.sende({ typ: 'modus', wert: $('modus').value }));
-$('sperre').addEventListener('click', () => verbindung?.sende({ typ: 'sperre', wert: !stand?.gesperrt }));
-$('aufraeumen').addEventListener('click', () => verbindung?.sende({ typ: 'aufraeumen' }));
+// --- Nachrichten -------------------------------------------------------------------------
+
+function verarbeite(n) {
+  switch (n.typ) {
+    case 't':
+      if (finale && n.s === finale.id) finale.takt(n.n, n.e);
+      return;
+    case 'belegt':
+      if (++belegtVersuche > 5) return meldung('Kein freier Raum gefunden. Bitte Seite neu laden.', true);
+      raum = neuerRaum();
+      return oeffneRaum();
+    case 'willkommen':
+      belegtVersuche = 0;
+      raum.zeit = Date.now();
+      speicher.schreib('kbs-turnier', JSON.stringify(raum));
+      if (spielzeit) sende({ typ: 'optionen', optionen: { ende: spielzeit } });
+      return;
+    case 'stand':
+      stand = n;
+      return zeichneStand();
+    case 'spiel':
+      return starteFinalAnsicht(n);
+    case 'meldung':
+      return meldung(n.text);
+  }
+}
+
+// --- Steuerung ------------------------------------------------------------------------------
+
+// Nur zum Ausprobieren: /beamer?spielzeit=20 verkürzt jede Partie auf 20 Sekunden.
+const spielzeit = Number(new URLSearchParams(location.search).get('spielzeit')) || null;
+
+function sendeOptionen() {
+  const optionen = { alleWaffen: $('opt-waffen').checked, wind: $('opt-wind').checked, wetter: $('opt-wetter').checked, modus: $('opt-modus').value };
+  if (spielzeit) optionen.ende = spielzeit;
+  sende({ typ: 'optionen', optionen });
+}
+for (const id of ['opt-waffen', 'opt-wind', 'opt-wetter', 'opt-modus']) $(id).addEventListener('change', sendeOptionen);
+$('start').addEventListener('click', () => sende({ typ: 'starte' }));
+$('finale-start').addEventListener('click', () => sende({ typ: 'finale' }));
+document.querySelectorAll('.abbrechen').forEach((knopf) =>
+  knopf.addEventListener('click', () => {
+    if (confirm('Turnier abbrechen und zurück zur Lobby?')) sende({ typ: 'abbrechen' });
+  }),
+);
+$('neues-turnier').addEventListener('click', () => sende({ typ: 'neu' }));
+$('sperre').addEventListener('click', () => sende({ typ: 'sperre', wert: !stand?.gesperrt }));
+$('aufraeumen').addEventListener('click', () => sende({ typ: 'aufraeumen' }));
 $('neuer-raum').addEventListener('click', () => {
   if (!confirm('Neuen Raum öffnen? Alle müssen dann den neuen QR-Code scannen.')) return;
   raum = neuerRaum();
@@ -104,291 +132,185 @@ $('neuer-raum').addEventListener('click', () => {
 $('spielerliste').addEventListener('click', (ereignis) => {
   const kachel = ereignis.target.closest('.kachel');
   const spieler = stand?.spieler.find((s) => s.id === kachel?.dataset.id);
-  if (spieler && confirm(`${spieler.name} aus dem Raum nehmen?`)) verbindung?.sende({ typ: 'entferne', id: spieler.id });
+  if (spieler && confirm(`${spieler.name} aus dem Raum nehmen?`)) sende({ typ: 'entferne', id: spieler.id });
 });
 
-$('bericht').addEventListener('click', () => {
-  $('bericht-text').value = erstelleBericht();
-  $('bericht-dialog').showModal();
-});
-$('bericht-schliessen').addEventListener('click', () => $('bericht-dialog').close());
-$('bericht-kopieren').addEventListener('click', async () => {
-  const feld = $('bericht-text');
-  try {
-    await navigator.clipboard.writeText(feld.value);
-    $('bericht-kopieren').textContent = 'Kopiert ✓';
-  } catch {
-    feld.select();
-    document.execCommand('copy');
-  }
-  setTimeout(() => ($('bericht-kopieren').textContent = 'Kopieren'), 2000);
-});
-$('bericht-laden').addEventListener('click', () => {
-  const datei = new Blob([$('bericht-text').value], { type: 'text/plain;charset=utf-8' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(datei);
-  link.download = `netztest-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.txt`;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-});
+// --- Anzeige je Phase -------------------------------------------------------------------------
 
-// --- Anzeige -------------------------------------------------------------------
+function zeigeAnsicht(name) {
+  for (const a of ['lobby', 'quali', 'finale', 'sieger']) $(`ansicht-${a}`).hidden = a !== name;
+  document.body.classList.toggle('vollbild', name === 'finale' || name === 'sieger');
+}
 
-function zeichne() {
+function zeichneStand() {
   const s = stand;
-  const verbunden = s ? s.spieler.filter((sp) => sp.verbunden) : [];
-  const test = s?.test;
-  const laeuft = !!test?.laeuft;
+  if (s.phase === 'lobby') {
+    finale = null;
+    zeigeAnsicht('lobby');
+    zeichneLobby(s);
+  } else if (s.phase === 'qualifying') {
+    finale = null;
+    zeigeAnsicht('quali');
+    zeichneQualifying(s);
+  } else if (s.phase === 'finale') {
+    zeigeAnsicht('finale');
+    if (!finale) sende({ typ: 'nachholen' });
+  } else if (s.phase === 'siegerehrung') {
+    finale = null;
+    if ($('ansicht-sieger').hidden) starteKonfetti();
+    zeigeAnsicht('sieger');
+    $('sieger-name').textContent = s.sieger?.name ?? '';
+  }
+}
 
+function zeichneLobby(s) {
+  const verbunden = s.spieler.filter((sp) => sp.verbunden);
   $('anzahl').textContent = verbunden.length;
-  $('start').hidden = laeuft;
-  $('stopp').hidden = !laeuft;
-  $('start').disabled = verbunden.length < 2;
-  $('modus').disabled = laeuft;
-  $('dauer').disabled = laeuft;
-  if (s) {
-    $('modus').value = s.modus;
-    $('sperre').textContent = s.gesperrt ? 'Raum entsperren' : 'Raum sperren';
-  }
+  const o = s.optionen;
+  $('opt-waffen').checked = o.alleWaffen;
+  $('opt-wind').checked = o.wind;
+  $('opt-wetter').checked = o.wetter;
+  $('opt-modus').value = o.modus;
+  $('sperre').textContent = s.gesperrt ? 'Raum entsperren' : 'Raum sperren';
+  const plan = planeTurnier(verbunden.length, o.modus);
+  $('plan').textContent = `Plan: ${beschreibePlan(verbunden.length, o.modus)}${plan.hinweis ? ` – ${plan.hinweis}` : ''}`;
+  $('start').disabled = plan.art === 'zuwenig';
+  $('start').textContent = plan.art === 'qualifying' ? 'Qualifying starten' : 'Finale starten';
 
-  if (laeuft) {
-    $('plan').textContent = test.art === 'direktfinale' ? 'Test läuft – alle in einer Gruppe' : `Test läuft – ${test.gruppen.length} Gruppen`;
-    $('rest').textContent = test.takt === 0 ? 'gleich …' : `${Math.ceil(test.restMs / 1000)} s`;
-    $('server-takt').textContent = serverTaktText(test.serverTakt);
-  } else {
-    $('plan').textContent = s ? `Turnier-Plan: ${beschreibePlan(verbunden.length, s.modus)}` : 'Verbinde …';
-  }
-  $('test-anzeige').hidden = !laeuft;
-
-  zeichneEmpfehlung();
-  zeichneSpieler();
-}
-
-function serverTaktText(st) {
-  if (!st?.anzahl) return '';
-  return `Server-Takt Ø ${zahl(st.schnittMs, 1)} ms · max ${st.maxMs} ms`;
-}
-
-/** Messwerte mit den vom Server gezählten Abbrüchen (zuverlässiger als die des Handys). */
-function messwerte(spieler) {
-  return { bench: spieler.bench, werte: spieler.werte ? { ...spieler.werte, abbrueche: spieler.abbruecheTest } : null };
-}
-
-function testGruppen() {
-  const test = stand?.test;
-  if (!test) return [];
-  const nachId = new Map(stand.spieler.map((s) => [s.id, s]));
-  return test.gruppen.map((g) => ({ name: g.name, mitglieder: g.mitglieder.map((id) => nachId.get(id)).filter(Boolean) }));
-}
-
-/** Haben alle Handys einer Gruppe dieselbe Landschaft berechnet? */
-function syncStatus(mitglieder, laeuft) {
-  if (!laeuft) {
-    const ergebnisse = mitglieder.map((s) => s.ergebnis).filter((e) => e?.h);
-    if (!ergebnisse.length) return { klasse: '', text: 'warte auf Ergebnisse …', ok: null };
-    const gleich = ergebnisse.every((e) => e.h === ergebnisse[0].h && e.n === ergebnisse[0].n);
-    if (!gleich) return { klasse: 'nein', text: '✗ auseinandergelaufen', ok: false };
-    const fehlen = mitglieder.length - ergebnisse.length;
-    return { klasse: 'ja', text: fehlen ? `✓ synchron (${ergebnisse.length} von ${mitglieder.length})` : '✓ synchron', ok: true };
-  }
-  const nachTakt = new Map();
-  for (const z of mitglieder.map((s) => s.zwischen).filter((z) => z?.h)) {
-    if (!nachTakt.has(z.n)) nachTakt.set(z.n, []);
-    nachTakt.get(z.n).push(z.h);
-  }
-  const vergleichbar = [...nachTakt.entries()].filter(([, hs]) => hs.length > 1).sort((a, b) => b[0] - a[0]);
-  if (!vergleichbar.length) return { klasse: '', text: 'läuft …', ok: null };
-  if (vergleichbar.some(([, hs]) => hs.some((h) => h !== hs[0]))) return { klasse: 'nein', text: '✗ auseinandergelaufen', ok: false };
-  return { klasse: 'ja', text: '✓ synchron', ok: true };
-}
-
-function auswertung() {
-  const test = stand?.test;
-  if (!test || test.laeuft) return null;
-  const gruppen = testGruppen();
-  const teilnehmer = gruppen.flatMap((g) => g.mitglieder);
-  const bewertungen = teilnehmer.map((s) => bewerte(messwerte(s)));
-  const syncs = gruppen.map((g) => syncStatus(g.mitglieder, false));
-  const alleSynchron = syncs.every((s) => s.ok !== false);
-  const zaehle = (stufe) => bewertungen.filter((b) => b.stufe === stufe).length;
-  const verzoegerungen = teilnehmer.map((s) => s.werte?.eingabe?.p95).filter((v) => typeof v === 'number');
-  return {
-    gruppen,
-    syncs,
-    teilnehmer,
-    bewertungen,
-    empfehlung: empfehlung(bewertungen, alleSynchron),
-    gut: zaehle('gut'),
-    mittel: zaehle('mittel'),
-    schlecht: zaehle('schlecht'),
-    verzoegerungMedian: median(verzoegerungen),
-  };
-}
-
-function zeichneEmpfehlung() {
-  const a = auswertung();
-  const kasten = $('empfehlung');
-  if (!a?.empfehlung) {
-    kasten.hidden = true;
-    return;
-  }
-  kasten.hidden = false;
-  kasten.className = `karte empfehlung ${a.empfehlung.art}`;
-  $('empfehlung-titel').textContent = a.empfehlung.text;
-  const teile = [`${a.gut} grün · ${a.mittel} gelb · ${a.schlecht} rot`];
-  if (a.verzoegerungMedian != null) teile.push(`typische Verzögerung ${a.verzoegerungMedian} ms`);
-  const st = serverTaktText(stand.test.serverTakt);
-  if (st) teile.push(st);
-  $('empfehlung-details').textContent = teile.join(' · ');
-}
-
-function zeichneSpieler() {
-  const liste = $('spielerliste');
-  if (!stand) return;
-  const test = stand.test;
-  const abschnitte = [];
-  if (test) {
-    const imTest = new Set();
-    for (const g of testGruppen()) {
-      g.mitglieder.forEach((s) => imTest.add(s.id));
-      abschnitte.push({ titel: g.name, sync: syncStatus(g.mitglieder, test.laeuft), spieler: g.mitglieder });
-    }
-    const rest = stand.spieler.filter((s) => !imTest.has(s.id));
-    if (rest.length) abschnitte.push({ titel: test.laeuft ? 'Warten auf den nächsten Durchgang' : 'Nicht im letzten Test', sync: null, spieler: rest });
-  } else if (stand.spieler.length) {
-    abschnitte.push({ titel: null, sync: null, spieler: stand.spieler });
-  }
-
-  // Nur neu aufbauen, wenn sich etwas geändert hat – sonst gehen Klicks verloren.
-  const signatur = JSON.stringify(abschnitte.map((a) => [a.titel, a.sync, a.spieler]));
+  const signatur = JSON.stringify(s.spieler);
   if (signatur === letzteSignatur) return;
   letzteSignatur = signatur;
-
-  if (!abschnitte.length) {
-    liste.innerHTML = '<p class="leer">Noch niemand da – QR-Code scannen!</p>';
+  if (!s.spieler.length) {
+    $('spielerliste').innerHTML = '<p class="leer">Noch niemand da – QR-Code scannen!</p>';
     return;
   }
-  liste.replaceChildren(
-    ...abschnitte.map((a) => {
-      const bereich = document.createElement('section');
-      bereich.className = 'gruppe';
-      if (a.titel) {
-        const kopf = document.createElement('h3');
-        kopf.textContent = a.titel;
-        if (a.sync) {
-          const sync = document.createElement('span');
-          sync.className = `sync ${a.sync.klasse}`;
-          sync.textContent = a.sync.text;
-          kopf.append(sync);
-        }
-        bereich.append(kopf);
-      }
-      const kacheln = document.createElement('div');
-      kacheln.className = 'kacheln';
-      kacheln.append(...a.spieler.map(kachel));
-      bereich.append(kacheln);
-      return bereich;
+  $('spielerliste').replaceChildren(
+    ...s.spieler.map((sp) => {
+      const k = document.createElement('button');
+      k.type = 'button';
+      k.className = `kachel gut${sp.verbunden ? '' : ' getrennt'}`;
+      k.dataset.id = sp.id;
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = sp.name;
+      const zeile = document.createElement('span');
+      zeile.className = 'geraet';
+      zeile.textContent = sp.verbunden ? 'bereit' : 'getrennt';
+      k.append(name, zeile);
+      return k;
     }),
   );
 }
 
-function kachel(spieler) {
-  const { stufe, gruende } = bewerte(messwerte(spieler));
-  const knopf = document.createElement('button');
-  knopf.type = 'button';
-  knopf.className = `kachel ${stufe}${spieler.verbunden ? '' : ' getrennt'}`;
-  knopf.dataset.id = spieler.id;
+function zeichneQualifying(s) {
+  letzteSignatur = '';
+  const nachId = new Map(s.spieler.map((sp) => [sp.id, sp]));
+  const quali = s.partien.filter((p) => p.art === 'quali');
+  const fertig = quali.filter((p) => p.ergebnis || p.abgebrochen).length;
+  $('quali-stand').textContent = `${fertig} von ${quali.length} Gruppen entschieden`;
+  $('finale-start').disabled = !s.qualifyingFertig || s.finalisten.length < 1;
+  $('finale-start').textContent = s.qualifyingFertig ? `Finale starten (${s.finalisten.length})` : 'Finale starten';
 
-  const name = document.createElement('span');
-  name.className = 'name';
-  name.textContent = spieler.name;
+  $('finalisten').replaceChildren(
+    ...(s.finalisten.length ? [Object.assign(document.createElement('span'), { className: 'finalisten-titel', textContent: 'Im Finale:' })] : []),
+    ...s.finalisten.map((id) => Object.assign(document.createElement('span'), { className: 'finalist', textContent: nachId.get(id)?.name ?? '?' })),
+  );
 
-  const geraet = document.createElement('span');
-  geraet.className = 'geraet';
-  const g = spieler.geraet || {};
-  geraet.textContent = [g.modell, g.system, g.browser].filter(Boolean).join(' · ') + (spieler.verbunden ? '' : ' · getrennt');
-
-  const messung = document.createElement('span');
-  messung.className = 'messung';
-  const w = spieler.werte || {};
-  const teile = [];
-  if (w.ping?.med != null) teile.push(`Ping ${w.ping.med} ms`);
-  if (w.eingabe?.p95 != null) teile.push(`Verz. ${w.eingabe.p95} ms`);
-  if (w.takt?.n) teile.push(`Hänger ${w.takt.haenger}`);
-  if (w.fps?.min != null) teile.push(`${w.fps.min} B/s`);
-  if (spieler.bench?.msProSchritt != null) teile.push(`Physik ${zahl(spieler.bench.msProSchritt, 1)} ms`);
-  messung.textContent = teile.join(' · ') || 'Messung läuft …';
-
-  knopf.append(name, geraet, messung);
-  if (gruende.length) {
-    const grund = document.createElement('span');
-    grund.className = 'gruende';
-    grund.textContent = gruende.join(', ');
-    knopf.append(grund);
-  }
-  return knopf;
+  $('gruppen').replaceChildren(
+    ...quali.map((p) => {
+      const karte = document.createElement('section');
+      karte.className = `karte gruppe-karte${p.ergebnis ? ' entschieden' : ''}`;
+      const kopf = document.createElement('h2');
+      const sekunden = Math.floor(p.takt / 20);
+      const zeit = p.takt ? `${Math.floor(sekunden / 60)}:${String(sekunden % 60).padStart(2, '0')}` : 'startet …';
+      kopf.innerHTML = `<span></span><small>${p.abgebrochen ? 'ohne Ergebnis' : p.ergebnis ? 'entschieden' : zeit}</small>`;
+      kopf.firstChild.textContent = p.name;
+      karte.append(kopf);
+      const liste = document.createElement('ul');
+      liste.className = 'mitspieler';
+      const lage = new Map((p.lage?.p ?? []).map(([nr, energie, aktiv]) => [nr, { energie, aktiv }]));
+      p.mitglieder.forEach((id, i) => {
+        const sp = nachId.get(id);
+        const l = lage.get(sp?.nr);
+        const eintrag = document.createElement('li');
+        const istSieger = p.ergebnis && p.ergebnis.sieger === sp?.nr;
+        if (istSieger) eintrag.classList.add('sieger');
+        else if (l && !l.aktiv) eintrag.classList.add('raus'); // der Sieger wird nie durchgestrichen
+        const farbe = document.createElement('span');
+        farbe.className = 'farbe';
+        farbe.style.background = `rgb(${SPIELERFARBEN[i].join(',')})`;
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = (p.ergebnis && p.ergebnis.sieger === sp?.nr ? '🏆 ' : '') + (sp?.name ?? '?');
+        const balken = document.createElement('span');
+        balken.className = 'balken';
+        const fuellung = document.createElement('span');
+        fuellung.style.width = `${l ? Math.max(0, (l.energie / MAX_LEBENSENERGIE) * 100) : 100}%`;
+        balken.append(fuellung);
+        eintrag.append(farbe, name, balken);
+        liste.append(eintrag);
+      });
+      karte.append(liste);
+      if (p.abweichung) {
+        const warnung = document.createElement('p');
+        warnung.className = 'fehler';
+        warnung.textContent = 'Handys rechneten unterschiedlich – Ergebnis bitte prüfen.';
+        karte.append(warnung);
+      }
+      return karte;
+    }),
+  );
 }
 
-// --- Bericht (ohne Namen) --------------------------------------------------------
+// --- Finale im Großformat ------------------------------------------------------------------
 
-function erstelleBericht() {
-  if (!stand) return 'Noch keine Daten.';
-  const zeilen = [];
-  const jetzt = new Date();
-  const a = auswertung();
-  const test = stand.test;
-
-  zeilen.push('KBS-Cannonhill – Netztest-Ergebnis');
-  zeilen.push(`Zeit: ${jetzt.toLocaleString('de-DE')} · Adresse: ${location.host}`);
-  zeilen.push(`Handys im Raum: ${stand.spieler.length} (verbunden: ${stand.spieler.filter((s) => s.verbunden).length})`);
-  if (test) {
-    zeilen.push(`Test: ${test.laeuft ? 'läuft noch' : 'beendet'} · Dauer ${test.dauerMs / 1000} s · Einteilung ${test.art} · ${test.gruppen.length} Gruppe(n)`);
-    if (test.hinweis) zeilen.push(`Hinweis: ${test.hinweis}`);
-    const st = serverTaktText(test.serverTakt);
-    if (st) zeilen.push(`${st} · ${test.serverTakt.anzahl} Takte`);
+async function starteFinalAnsicht(info) {
+  const bilder = await bilderLaden;
+  if (!bilder) return meldung('Bilder konnten nicht geladen werden.');
+  if (!zeichner) zeichner = new Zeichner($('finale'), bilder, { namenPx: 8, kraftAnzeige: 'keine' });
+  if (finale && finale.id === info.s) {
+    finale.baueAuf(info);
   } else {
-    zeilen.push('Test: noch nicht gestartet');
+    finale = new NetzSpiel(info, {
+      steinTextur: steinTextur(bilder),
+      nachBild: (spiel) => zeichner.nachBild(spiel),
+      lueckeEntdeckt: () => sende({ typ: 'nachholen' }),
+    });
   }
-  if (a) {
-    zeilen.push(`Empfehlung: ${a.empfehlung?.text ?? '–'} (${a.gut} grün, ${a.mittel} gelb, ${a.schlecht} rot)`);
-    a.gruppen.forEach((g, i) => zeilen.push(`  ${g.name}: ${g.mitglieder.length} Handys, ${a.syncs[i].text}`));
-  }
-
-  // Mathe-Varianten: gleiche Buchstaben = Kommazahl-Funktionen rechnen gleich
-  const varianten = new Map();
-  for (const s of stand.spieler) {
-    const m = s.bench?.mathe;
-    if (m) varianten.set(m, (varianten.get(m) || 0) + 1);
-  }
-  const buchstaben = new Map([...varianten.entries()].sort((x, y) => y[1] - x[1]).map(([m], i) => [m, String.fromCharCode(65 + i)]));
-  if (buchstaben.size) {
-    zeilen.push(`Mathe-Varianten: ${[...buchstaben.entries()].map(([m, b]) => `${b} = ${m} (${varianten.get(m)}×)`).join(', ')}`);
-  }
-
-  zeilen.push('');
-  zeilen.push('| Gerät | Gruppe | System | Browser | Modell | Ping Ø/95 | Verz. Ø/95 | Takte | Hänger | max. Lücke | Jitter | Abbrüche | versteckt | B/s min/Ø | Physik ms | Physik ok | Mathe | wach | Ampel | Gründe |');
-  zeilen.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
-  const gruppeVon = new Map();
-  if (test) test.gruppen.forEach((g) => g.mitglieder.forEach((id) => gruppeVon.set(id, g.name)));
-  const sortiert = stand.spieler.slice().sort((x, y) => (gruppeVon.get(x.id) || '~').localeCompare(gruppeVon.get(y.id) || '~') || x.nr - y.nr);
-  sortiert.forEach((s, i) => {
-    const g = s.geraet || {};
-    const w = s.werte || {};
-    const b = s.bench || {};
-    const { stufe, gruende } = bewerte(messwerte(s));
-    zeilen.push(`| ${String(i + 1).padStart(2, '0')} | ${gruppeVon.get(s.id) || '–'} | ${g.system ?? '–'} | ${g.browser ?? '–'} | ${g.modell ?? '–'} | ${paar(w.ping)} | ${paar(w.eingabe)} | ${w.takt?.n ?? '–'} | ${w.takt?.haenger ?? '–'} | ${w.takt?.maxLuecke ?? '–'} | ${w.takt?.jitter ?? '–'} | ${s.abbruecheTest} | ${w.versteckt ?? '–'} | ${w.fps ? `${w.fps.min}/${w.fps.schnitt}` : '–'} | ${b.msProSchritt ?? '–'} | ${b.korrekt === undefined ? '–' : b.korrekt ? 'ja' : 'NEIN'} | ${buchstaben.get(b.mathe) ?? '–'} | ${w.wachbleiben ?? '–'} | ${stufe} | ${gruende.join(', ')} |`);
-  });
-  zeilen.push('');
-  zeilen.push(`Grenzen (gut/mittel): Verzögerung 95% ≤ ${GRENZEN.eingabeP95.join('/')} ms · Hänger/min ≤ ${GRENZEN.haengerProMinute.join('/')} · Abbrüche ≤ ${GRENZEN.abbrueche.join('/')} · Physik ≤ ${GRENZEN.msProSchritt.join('/')} ms · B/s ≥ ${GRENZEN.fpsMin.join('/')}`);
-  return zeilen.join('\n');
+  $('finale-namen').textContent = info.spieler.map((p) => p.name).join(' · ');
+  zeigeAnsicht('finale');
+  zeichner.passeGroesseAn();
 }
 
-function paar(messung) {
-  return messung?.med != null ? `${messung.med}/${messung.p95}` : '–';
+function schleife(jetzt) {
+  requestAnimationFrame(schleife);
+  if (!finale || $('ansicht-finale').hidden) return;
+  finale.laufe(jetzt);
+  zeichner.zeichne(finale.spiel);
+  $('finale-hinweis').hidden = finale.spiel.bild > 0;
 }
+requestAnimationFrame(schleife);
 
-function zahl(wert, stellen) {
-  return wert == null ? '–' : wert.toLocaleString('de-DE', { minimumFractionDigits: stellen, maximumFractionDigits: stellen });
+// Läuft der Tab im Hintergrund, rechnet das Finale trotzdem weiter
+setInterval(() => {
+  if (finale && document.hidden) finale.laufeAlles();
+}, 500);
+window.addEventListener('resize', () => zeichner?.passeGroesseAn());
+
+// --- Siegerehrung ---------------------------------------------------------------------------
+
+function starteKonfetti() {
+  const farben = ['#ff6b6b', '#ffd43b', '#69db7c', '#4dabf7', '#da77f2', '#ff922b'];
+  $('konfetti').replaceChildren(
+    ...Array.from({ length: 90 }, () => {
+      const teil = document.createElement('span');
+      teil.style.left = `${Math.random() * 100}%`;
+      teil.style.background = farben[Math.floor(Math.random() * farben.length)];
+      teil.style.animationDelay = `${Math.random() * 3}s`;
+      teil.style.animationDuration = `${3 + Math.random() * 3}s`;
+      return teil;
+    }),
+  );
 }
 
 oeffneRaum();

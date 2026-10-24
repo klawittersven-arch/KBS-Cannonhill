@@ -1,11 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import { teileGruppen, MAX_SPIELER } from '../public/js/gruppen.js';
-import { normalisiereName, saeubere } from './hilfen';
+import { normalisiereName, saeubere, sende, sendeText } from './hilfen';
+import type { Env } from './env';
 
-export interface Env {
-  RAUM: DurableObjectNamespace<Raum>;
-  ASSETS: Fetcher;
-}
 
 const TAKT_MS = 50; // 20 Takte pro Sekunde, wie später im Spiel
 const STAND_MS = 1000; // so oft bekommt der Beamer den Gesamtstand
@@ -429,19 +426,5 @@ export class Raum extends DurableObject<Env> {
         },
       },
     });
-  }
-}
-
-// --- Hilfsfunktionen -------------------------------------------------------
-
-function sende(ws: WebSocket, nachricht: unknown) {
-  sendeText(ws, JSON.stringify(nachricht));
-}
-
-function sendeText(ws: WebSocket, text: string) {
-  try {
-    ws.send(text);
-  } catch {
-    // Verbindung gerade zu – das Handy holt beim Wiederverbinden alles nach.
   }
 }

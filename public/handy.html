@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#eef3f7">
+  <meta name="theme-color" content="#17212b">
   <title>KBS-Cannonhill</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="/css/stil.css">
 </head>
 <body class="handy">
-  <main>
+  <main id="rahmen">
     <header class="kopf">
       <span class="logo">KBS-Cannonhill</span>
       <span id="raum-anzeige"></span>
@@ -35,41 +35,54 @@
 
     <section id="lobby" hidden>
       <h1>Hallo <span class="mein-name"></span>!</h1>
-      <p class="gross" id="lobby-text">Du bist drin. Schau auf den Beamer – gleich startet der Test.</p>
-      <dl class="werte">
-        <div><dt>Verbindung</dt><dd id="lobby-ping">–</dd></div>
-        <div><dt>Gerätetest</dt><dd id="lobby-bench">läuft …</dd></div>
-      </dl>
-      <p class="tipp">Lass diese Seite offen und das Handy entsperrt.</p>
+      <p class="gross" id="lobby-text">Du bist drin. Gleich geht's los – schau auf den Beamer.</p>
+      <p class="tipp">Lass diese Seite offen. Zum Spielen das Handy am besten <strong>quer</strong> halten.</p>
     </section>
 
-    <section id="test" hidden>
-      <div class="testkopf">
-        <strong id="gruppenname"></strong>
-        <span id="countdown" class="countdown"></span>
-      </div>
-      <ul id="mitglieder" class="mitglieder"></ul>
-      <canvas id="landschaft" width="320" height="200" aria-label="Landschaft deiner Gruppe"></canvas>
-      <p class="tipp">Tippe auf die Landschaft, um zu schießen. Bei allen in deiner Gruppe passiert gleichzeitig dasselbe – vergleicht eure Handys!</p>
-      <dl class="werte">
-        <div><dt>Ping</dt><dd id="test-ping">–</dd></div>
-        <div><dt>Verzögerung</dt><dd id="test-verz">–</dd></div>
-        <div><dt>Bilder/s</dt><dd id="test-fps">–</dd></div>
-      </dl>
-    </section>
-
-    <section id="fertig" hidden>
-      <h1>Geschafft – danke!</h1>
-      <p class="ampel-gross"><span id="fertig-punkt" class="punkt"></span><span id="fertig-text"></span></p>
-      <dl class="werte" id="fertig-werte"></dl>
-      <p class="tipp">Lass die Seite offen, falls noch ein Durchgang kommt.</p>
-    </section>
-
-    <section id="meldung" hidden>
-      <h1 id="meldung-titel"></h1>
-      <p id="meldung-text" class="gross"></p>
+    <section id="info" hidden>
+      <div id="info-bild" class="info-bild" aria-hidden="true"></div>
+      <h1 id="info-titel"></h1>
+      <p id="info-text" class="gross"></p>
     </section>
   </main>
+
+  <div id="spielansicht" class="probe-raster" hidden>
+    <div class="spielflaeche">
+      <canvas id="spiel" width="384" height="216" aria-label="Spielfeld"></canvas>
+      <div id="spiel-hinweis" class="ende-anzeige" hidden>
+        <div id="hinweis-bild" class="pokal" aria-hidden="true"></div>
+        <p id="hinweis-titel"></p>
+        <small id="hinweis-text"></small>
+      </div>
+    </div>
+    <aside class="steuerpult">
+      <div class="spielkopf">
+        <strong id="partie-name"></strong>
+        <span id="meine-farbe" class="meine-farbe"></span>
+      </div>
+      <div class="feuer-zeile">
+        <div class="salve-anzeige"><span id="salve-zahl">–</span><small>bis zur Salve</small></div>
+        <div class="energie"><small>Energie</small><span id="energie-wert"></span></div>
+      </div>
+      <div class="regler">
+        <div class="regler-kopf"><span>Winkel</span><output id="winkel-wert"></output></div>
+        <div class="regler-zeile">
+          <button class="leise rund" data-schritt="winkel" data-wert="-1" aria-label="weiter nach links">◀</button>
+          <input id="winkel" type="range" min="0" max="76" step="1">
+          <button class="leise rund" data-schritt="winkel" data-wert="1" aria-label="weiter nach rechts">▶</button>
+        </div>
+      </div>
+      <div class="regler">
+        <div class="regler-kopf"><span>Kraft</span><output id="kraft-wert"></output></div>
+        <div class="regler-zeile">
+          <button class="leise rund" data-schritt="kraft" data-wert="-1" aria-label="weniger Kraft">−</button>
+          <input id="kraft" type="range" min="1" max="50" step="1">
+          <button class="leise rund" data-schritt="kraft" data-wert="1" aria-label="mehr Kraft">+</button>
+        </div>
+      </div>
+      <div id="munition" class="munitionswahl" aria-label="Munition" hidden></div>
+    </aside>
+  </div>
   <script type="module" src="/js/handy.js"></script>
 </body>
 </html>

@@ -23,3 +23,15 @@ export function saeubere(wert: unknown, tiefe = 0): unknown {
   }
   return null;
 }
+
+export function sende(ws: WebSocket, nachricht: unknown) {
+  sendeText(ws, JSON.stringify(nachricht));
+}
+
+export function sendeText(ws: WebSocket, text: string) {
+  try {
+    ws.send(text);
+  } catch {
+    // Verbindung gerade zu – das Handy holt beim Wiederverbinden alles nach.
+  }
+}

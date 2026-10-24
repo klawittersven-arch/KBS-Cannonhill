@@ -3,77 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KBS-Cannonhill · Beamer</title>
+  <title>KBS-Cannonhill · Turnier</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="/css/stil.css">
 </head>
 <body class="beamer">
-  <div class="beamer-raster">
+  <!-- Lobby -->
+  <div id="ansicht-lobby" class="beamer-raster">
     <aside class="seitenleiste">
       <section class="karte beitritt">
-        <div class="logo">KBS-Cannonhill · Netztest</div>
+        <div class="logo">KBS-Cannonhill</div>
         <div id="qr" class="qr"></div>
         <p class="url" id="beitritt-url"></p>
         <div class="code" id="raumcode">····</div>
       </section>
-
       <section class="karte steuerung">
-        <h2>Steuerung <span id="verbindung" class="punkt" title="Verbindung zum Server"></span></h2>
+        <h2>Turnier <span id="verbindung" class="punkt" title="Verbindung zum Server"></span></h2>
+        <label class="haken"><input id="opt-waffen" type="checkbox"> Alle Waffen aktivieren</label>
         <div class="zeile">
-          <label>Einteilung
-            <select id="modus">
-              <option value="auto">Automatisch</option>
-              <option value="direktfinale">Direkt ins Finale</option>
-              <option value="qualifying">Qualifying</option>
-            </select>
-          </label>
-          <label>Testdauer
-            <select id="dauer">
-              <option value="30">30 Sekunden</option>
-              <option value="60" selected>60 Sekunden</option>
-              <option value="120">2 Minuten</option>
-            </select>
-          </label>
+          <label class="haken"><input id="opt-wind" type="checkbox"> Wind</label>
+          <label class="haken"><input id="opt-wetter" type="checkbox"> Wetter</label>
         </div>
-        <button id="start">Test starten</button>
-        <button id="stopp" class="leise" hidden>Test abbrechen</button>
+        <label>Einteilung
+          <select id="opt-modus">
+            <option value="auto">Automatisch</option>
+            <option value="direktfinale">Direkt ins Finale (bis 8)</option>
+            <option value="qualifying">Mit Qualifying</option>
+          </select>
+        </label>
+        <button id="start">Turnier starten</button>
         <div class="zeile">
           <button id="sperre" class="leise">Raum sperren</button>
           <button id="aufraeumen" class="leise">Getrennte entfernen</button>
         </div>
-        <div class="zeile">
-          <button id="bericht" class="leise">Ergebnis anzeigen</button>
-          <button id="neuer-raum" class="leise">Neuer Raum</button>
-        </div>
-        <p class="tipp">Kachel antippen, um ein Handy aus dem Raum zu nehmen.</p>
+        <button id="neuer-raum" class="leise">Neuer Raum</button>
+        <p class="tipp">Kachel antippen, um jemanden aus dem Raum zu nehmen.</p>
       </section>
     </aside>
-
     <main class="hauptbereich">
       <section class="karte uebersicht">
         <div><div class="zahl" id="anzahl">0</div><div class="einheit">Handys verbunden</div></div>
         <div class="plan" id="plan"></div>
-        <div id="test-anzeige" hidden><div class="countdown" id="rest"></div><div class="einheit" id="server-takt"></div></div>
       </section>
-      <div id="meldung" class="meldung" hidden></div>
-      <section id="empfehlung" class="karte empfehlung" hidden>
-        <p class="titel" id="empfehlung-titel"></p>
-        <p class="details" id="empfehlung-details"></p>
-      </section>
-      <div id="spielerliste"></div>
+      <div class="meldung" hidden></div>
+      <div id="spielerliste" class="kacheln"></div>
     </main>
   </div>
 
-  <dialog id="bericht-dialog">
-    <h2>Ergebnis des Netztests</h2>
-    <p class="tipp">Ohne Namen – du kannst es direkt an Claude schicken.</p>
-    <textarea id="bericht-text" readonly></textarea>
-    <div class="knoepfe">
-      <button id="bericht-laden" class="leise">Als Datei speichern</button>
-      <button id="bericht-kopieren" class="leise">Kopieren</button>
-      <button id="bericht-schliessen">Schließen</button>
+  <!-- Qualifying -->
+  <div id="ansicht-quali" class="turnier-ansicht" hidden>
+    <header class="turnier-kopf">
+      <h1>Qualifying</h1>
+      <p id="quali-stand"></p>
+      <div class="knoepfe">
+        <button id="finale-start" disabled>Finale starten</button>
+        <button class="leise abbrechen">Abbrechen</button>
+      </div>
+    </header>
+    <div class="meldung" hidden></div>
+    <div id="finalisten" class="finalisten"></div>
+    <div id="gruppen" class="gruppen"></div>
+  </div>
+
+  <!-- Finale -->
+  <div id="ansicht-finale" class="finale-ansicht" hidden>
+    <canvas id="finale" width="384" height="216" aria-label="Finale"></canvas>
+    <div class="finale-titel">Finale</div>
+    <div id="finale-hinweis" class="ende-anzeige" hidden>
+      <div class="pokal" aria-hidden="true">🎯</div>
+      <p>Finale!</p>
+      <small id="finale-namen"></small>
     </div>
-  </dialog>
+    <button class="leise abbrechen finale-abbrechen">Abbrechen</button>
+  </div>
+
+  <!-- Siegerehrung -->
+  <div id="ansicht-sieger" class="sieger-ansicht" hidden>
+    <div id="konfetti" class="konfetti" aria-hidden="true"></div>
+    <div class="pokal-gross" aria-hidden="true">🏆</div>
+    <p class="sieger-titel">Turniersieger</p>
+    <p id="sieger-name" class="sieger-name"></p>
+    <button id="neues-turnier">Neues Turnier</button>
+  </div>
+
   <script type="module" src="/js/beamer.js"></script>
 </body>
 </html>
