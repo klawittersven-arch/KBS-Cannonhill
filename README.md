@@ -12,11 +12,15 @@ der Beamer zeigt Lobby, Ergebnisse und das Finale. Grundlage ist das Spiel
 
 ## Spielregeln (Abweichungen vom Original)
 
-- Alle **3 Sekunden** feuern alle Panzer gleichzeitig mit dem eingestellten Winkel, der Kraft und der Munition.
+- Alle **3 Sekunden** feuern alle Panzer gleichzeitig mit dem eingestellten Winkel und der Kraft.
+- Standard: **nur Raketen, unbegrenzt**. Mit „Alle Waffen aktivieren“ gelten die Waffen und das Lager des Originals
+  (4 Raketen, Stein unbegrenzt, Schild, Granaten …) und der Fallschirm-Ballon bringt Nachschub.
+- **Wind und Wetter** sind standardmäßig aus.
 - Panzer haben **500 statt 1000** Lebenspunkte.
 - Nach **2 Minuten** beginnt der Sudden Death: Raketen regnen vom Himmel, Schild, Magnet und Medipack wirken nicht mehr.
   Nach 2:10 gewinnt, wer die meiste Energie hat. Sterben die Letzten gleichzeitig, gewinnt, wer vorher mehr hatte.
 - Bis zu 8 Panzer (Original: 4); die Panzer zielen zu Beginn schräg zur Feldmitte.
+- Spielfeld 384×216 statt 640×480 (größere Panzer auf dem Handy); Geschosse in der Farbe des Schützen.
 
 ## Netztest im Unterricht
 

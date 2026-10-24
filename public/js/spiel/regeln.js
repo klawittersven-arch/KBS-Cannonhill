@@ -118,9 +118,16 @@ export const MUNITIONEN = [
   mun('Splitter', 12, EXP_SPLITTER, [RAUCH_RAUCH, 0], 100, -1, 0),
 ];
 
-/** Lager zu Spielbeginn (-1 = unbegrenzt). */
-export function startLager() {
+/**
+ * Lager zu Spielbeginn (-1 = unbegrenzt). Standard für die Klasse: nur Raketen,
+ * unbegrenzt. Mit „Alle Waffen“ gilt das Lager des Originals.
+ */
+export function startLager(alleWaffen = false) {
   const lager = new Int16Array(MUN_ANZAHL);
+  if (!alleWaffen) {
+    lager[M_RAKETE] = -1;
+    return lager;
+  }
   lager[M_STEIN] = -1;
   lager[M_RAKETE] = 4;
   lager[M_SCHILD] = 1;

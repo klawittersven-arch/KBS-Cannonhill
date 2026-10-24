@@ -58,9 +58,13 @@ export class Spiel {
    * @param {number|null} [o.suddenDeath]  Sekunden bis zum Geschossregen (null = nie)
    * @param {number|null} [o.ende]  Sekunden bis zum harten Ende (null = nie)
    * @param {number|null} [o.salve]  alle so viele Sekunden feuern alle gemeinsam (null = jeder feuert selbst)
+   * @param {boolean} [o.alleWaffen]  false: nur Raketen, unbegrenzt; true: Waffen und Lager wie im Original
    * @param {object|null} [o.steinTextur]  nur für die Farben
    */
-  constructor({ seed, spieler, wind = false, wetter = false, suddenDeath = 120, ende = 130, salve = SALVE_SEKUNDEN, steinTextur = null }) {
+  constructor({
+    seed, spieler, wind = false, wetter = false, suddenDeath = 120, ende = 130,
+    salve = SALVE_SEKUNDEN, alleWaffen = false, steinTextur = null,
+  }) {
     if (spieler.length < 1 || spieler.length > MAX_SPIELER) throw new Error('1 bis 8 Spieler');
     this.zufall = zufallsgenerator(seed);
     this.welt = new Welt(steinTextur);
@@ -72,6 +76,7 @@ export class Spiel {
     this.suddenDeathBild = suddenDeath == null ? Infinity : Math.round(suddenDeath * BILDER_PRO_SEKUNDE);
     this.endeBild = ende == null ? Infinity : Math.round(ende * BILDER_PRO_SEKUNDE);
     this.naechsterRegen = 0;
+    this.alleWaffen = alleWaffen;
     this.salveAbstand = salve == null ? null : Math.round(salve * BILDER_PRO_SEKUNDE);
     this.naechsteSalve = this.salveAbstand ?? Infinity;
 
@@ -97,8 +102,8 @@ export class Spiel {
       kx: KANONE[KANONE_SENKRECHT][0],
       ky: KANONE[KANONE_SENKRECHT][1],
       schussAktiv: false,
-      munition: M_STEIN,
-      lager: startLager(),
+      munition: alleWaffen ? M_STEIN : M_RAKETE,
+      lager: startLager(alleWaffen),
       kraft: START_KRAFT, // eingestellte Schusskraft
       schussEnergie: 0,
       energie: MAX_LEBENSENERGIE,
@@ -561,6 +566,7 @@ export class Spiel {
 
   /** CheckBallon(): Fallschirm mit Munition; wer ihn abschießt, bekommt sie. */
   bewegeBallon() {
+    if (!this.alleWaffen) return; // ohne Waffenwahl bringt der Ballon nichts
     const b = this.ballon;
     if (!b.aktiv && rest(this.zufall(), BALLON_ZUFALL) === 0) {
       b.aktiv = true;

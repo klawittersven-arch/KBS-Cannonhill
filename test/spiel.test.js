@@ -9,7 +9,7 @@ const spieler = (n) => Array.from({ length: n }, (_, i) => ({ nr: i + 1, name: `
 
 /** Spielt eine Partie mit zufälligen, aber reproduzierbaren Eingaben. */
 function spiele(seed, takte, optionen = {}) {
-  const spiel = new Spiel({ seed, spieler: spieler(4), ...optionen });
+  const spiel = new Spiel({ seed, spieler: spieler(4), alleWaffen: true, ...optionen });
   const r = zufallsgenerator(seed ^ 0x5eed);
   const verlauf = [];
   for (let t = 0; t < takte; t++) {
@@ -33,7 +33,7 @@ test('gleicher Startwert und gleiche Eingaben ergeben bit-genau dieselbe Partie'
 
 test('Nachspielen aus dem Eingabe-Verlauf ergibt dieselbe Partie (Wiedereinstieg)', () => {
   const { spiel, verlauf } = spiele(99, 300, { salve: null });
-  const nach = new Spiel({ seed: 99, spieler: spieler(4), salve: null });
+  const nach = new Spiel({ seed: 99, spieler: spieler(4), salve: null, alleWaffen: true });
   for (const eingaben of verlauf) nach.takt(eingaben);
   assert.equal(nach.pruefsumme(), spiel.pruefsumme());
 });
@@ -80,7 +80,7 @@ test('eine Rakete zieht 300 Energie ab, die zweite zerstört den Panzer', () => 
 });
 
 test('der Schild schützt vor Schaden', () => {
-  const spiel = new Spiel({ seed: 3, spieler: spieler(2), salve: null, suddenDeath: null, ende: null, wetter: false });
+  const spiel = new Spiel({ seed: 3, spieler: spieler(2), salve: null, suddenDeath: null, ende: null, alleWaffen: true });
   spiel.wendeAn({ nr: 2, m: M_SCHILD, f: 1, k: 10 });
   assert.ok(spiel.panzer[1].schild > 0);
   treffe(spiel, 1, M_RAKETE, 0);
@@ -102,7 +102,7 @@ test('alle 3 Sekunden feuern alle Panzer gemeinsam', () => {
 });
 
 test('Winkel, Kraft und Munition werden übernommen, leere Munition nicht', () => {
-  const spiel = new Spiel({ seed: 2, spieler: spieler(2) });
+  const spiel = new Spiel({ seed: 2, spieler: spieler(2), alleWaffen: true });
   spiel.takt([{ nr: 1, w: 70, k: 44, m: M_RAKETE }, { nr: 2, m: 5 /* Laser: 0 im Lager */ }]);
   const [a, b] = spiel.panzer;
   assert.deepEqual([a.kanone, a.kx, a.ky, a.kraft, a.munition], [70, ...KANONE[70], 44, M_RAKETE]);
@@ -123,4 +123,18 @@ test('zu Beginn zielen die Panzer schräg zur Mitte', () => {
     if (p.x < BREITE / 2) assert.ok(p.kx > 0 && p.ky < 0);
     else assert.ok(p.kx < 0 && p.ky < 0);
   }
+});
+
+test('Standard: nur Raketen, unbegrenzt, kein Ballon', () => {
+  const spiel = new Spiel({ seed: 21, spieler: spieler(3), suddenDeath: null, ende: null });
+  for (const p of spiel.panzer) {
+    assert.equal(p.munition, M_RAKETE);
+    assert.equal(p.lager[M_RAKETE], -1);
+    assert.equal(p.lager.filter((l) => l !== 0).length, 1);
+  }
+  spiel.takt([{ nr: 1, m: M_STEIN }]);
+  assert.equal(spiel.panzer[0].munition, M_RAKETE);
+  for (let t = 0; t < 20 * 30; t++) spiel.takt([]);
+  assert.equal(spiel.ballon.aktiv, false);
+  assert.ok(spiel.panzer.every((p) => p.lager[M_RAKETE] === -1));
 });

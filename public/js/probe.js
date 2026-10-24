@@ -43,6 +43,7 @@ function starteSpiel() {
     suddenDeath: $('opt-sudden').checked ? 120 : null,
     ende: $('opt-sudden').checked ? 130 : null,
     salve: $('opt-modus').value === 'salve' ? 3 : null,
+    alleWaffen: $('opt-waffen').checked,
     steinTextur: steinTextur(bilder),
   });
   steuere = 0;
@@ -51,6 +52,7 @@ function starteSpiel() {
   $('ende').hidden = true;
   $('feuer').hidden = spiel.salveAbstand != null;
   $('salve').hidden = spiel.salveAbstand == null;
+  $('munition').hidden = !spiel.alleWaffen; // nur Raketen: nichts zu wählen
   baueSteuerung();
   zuletzt = performance.now();
   uebrig = 0;
@@ -109,7 +111,8 @@ function computerZuege() {
     const entfernung = Math.abs(ziel.x - p.x);
     const k = Math.max(12, Math.min(50, Math.round(14 + entfernung / 14 + (Math.random() * 10 - 5))));
     const vorrat = [M_RAKETE, M_GRANATE, M_SCHNEEBALL, M_FASS].filter((m) => p.lager[m] > 0);
-    const m = vorrat.length && Math.random() < 0.35 ? vorrat[Math.floor(Math.random() * vorrat.length)] : M_STEIN;
+    let m = M_RAKETE;
+    if (spiel.alleWaffen) m = vorrat.length && Math.random() < 0.35 ? vorrat[Math.floor(Math.random() * vorrat.length)] : M_STEIN;
     wartend.set(p.nr, { nr: p.nr, w, k, m, f: salve ? 0 : 1 });
   });
 }
