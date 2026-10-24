@@ -4,8 +4,19 @@ Cannonhill als Klassen-Turnier: Das Spiel läuft auf den Smartphones der Schüle
 der Beamer zeigt Lobby, Ergebnisse und das Finale. Grundlage ist das Spiel
 [Cannonhill](https://dplate.de/games/cannonhill) von Dirk Plate.
 
-**Stand:** Netztest. Er prüft im echten Klassenraum, ob WLAN und Handys für Echtzeit reichen
-oder ob das Spiel im Salven-Modus (alle feuern gemeinsam) laufen sollte.
+**Stand:**
+- **Netztest** (`/beamer`, `/handy`): prüft im echten Klassenraum WLAN und Handys.
+- **Spielkern** (`public/js/spiel/`): das Original-Spiel, Bild für Bild nachgebaut und bit-genau
+  wiederholbar – Voraussetzung dafür, dass später alle Handys einer Gruppe dasselbe sehen.
+- **Probespiel** (`/probe`): das Spiel auf einem Gerät ausprobieren, 2–8 Panzer, andere auf Wunsch vom Computer.
+
+## Spielregeln (Abweichungen vom Original)
+
+- Alle **3 Sekunden** feuern alle Panzer gleichzeitig mit dem eingestellten Winkel, der Kraft und der Munition.
+- Panzer haben **500 statt 1000** Lebenspunkte.
+- Nach **2 Minuten** beginnt der Sudden Death: Raketen regnen vom Himmel, Schild, Magnet und Medipack wirken nicht mehr.
+  Nach 2:10 gewinnt, wer die meiste Energie hat. Sterben die Letzten gleichzeitig, gewinnt, wer vorher mehr hatte.
+- Bis zu 8 Panzer (Original: 4); die Panzer zielen zu Beginn schräg zur Feldmitte.
 
 ## Netztest im Unterricht
 
@@ -53,7 +64,16 @@ npm run last       # 30 simulierte Handys gegen den laufenden Server (ANZAHL, DA
 | `public/js/gruppen.js` | Gruppeneinteilung (Server und Beamer) |
 | `public/js/sim.js` | deterministische Mini-Pixelphysik (nur Ganzzahlen) |
 | `public/js/bewertung.js` | Ampel-Grenzen und Empfehlung |
-| `public/js/handy.js`, `beamer.js` | die beiden Oberflächen |
+| `public/js/handy.js`, `beamer.js` | die beiden Oberflächen des Netztests |
+| `public/js/spiel/regeln.js` | alle Werte des Originals (Materialien, Munition, Kanonenstellungen) |
+| `public/js/spiel/welt.js` | Pixelfeld, Landschaft, Pixel bewegen/löschen, Hangneigung |
+| `public/js/spiel/spiel.js` | eine Partie: Physik, Panzer, Munition, Explosionen, Salven, Sudden Death, Prüfsumme |
+| `public/js/spiel/zeichner.js` | Anzeige mit den Original-Grafiken, Flammen, Rauch, Trümmer |
+| `public/js/probe.js` | Probespiel auf einem Gerät |
+
+Der Spielkern rechnet nur mit + − × ÷, Wurzel und einem eigenen Zufallsgenerator – keine
+Winkelfunktionen, damit iPhone und Android exakt gleich rechnen. Flammen, Rauch und Farben
+entstehen nur in der Anzeige und zählen nicht zur Prüfsumme.
 
 ## Datenschutz
 
@@ -65,6 +85,7 @@ npm run last       # 30 simulierte Handys gegen den laufenden Server (ANZAHL, DA
 
 ## Danksagung
 
-- **Dirk Plate** – Cannonhill (Programmierung), **Heiko Plate** – Sound und Musik. Verwendung mit Erlaubnis.
+- **Dirk Plate** – Cannonhill (Programmierung), **Heiko Plate** – Sound und Musik. Spiellogik und Grafiken
+  (`public/img/`) stammen aus dem Original und werden mit Erlaubnis verwendet.
 - **univrsal** – SDL2-Portierung [cannonhill-sdl](https://github.com/univrsal/cannonhill-sdl).
 - **Kazuhiko Arase** – [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT, siehe `public/js/vendor/`).

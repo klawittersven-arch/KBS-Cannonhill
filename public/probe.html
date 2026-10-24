@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17212b">
+  <title>KBS-Cannonhill · Probespiel</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/stil.css">
+</head>
+<body class="probe">
+  <div class="probe-raster">
+    <div class="spielflaeche">
+      <canvas id="spiel" width="640" height="480" aria-label="Spielfeld"></canvas>
+      <div id="ende" class="ende-anzeige" hidden>
+        <div class="pokal" aria-hidden="true">🏆</div>
+        <p id="ende-text"></p>
+        <button id="nochmal">Nochmal</button>
+      </div>
+    </div>
+
+    <aside class="steuerpult">
+      <div class="pult-kopf">
+        <span class="logo">KBS-Cannonhill</span>
+        <button id="info" class="leise klein" title="Messwerte">i</button>
+        <button id="neu" class="leise klein">Neues Spiel</button>
+      </div>
+      <div id="panzerwahl" class="panzerwahl" aria-label="Panzer wählen"></div>
+      <div class="feuer-zeile">
+        <div id="salve" class="salve-anzeige"><span id="salve-zahl"></span><small>bis zur Salve</small></div>
+        <button id="feuer" class="feuer" hidden>Feuer!</button>
+        <div class="energie"><small>Energie</small><span id="energie-wert"></span></div>
+      </div>
+
+      <div class="regler">
+        <div class="regler-kopf"><span>Winkel</span><output id="winkel-wert"></output></div>
+        <div class="regler-zeile">
+          <button class="leise rund" data-schritt="winkel" data-wert="-1" aria-label="weiter nach links">◀</button>
+          <input id="winkel" type="range" min="0" max="76" step="1">
+          <button class="leise rund" data-schritt="winkel" data-wert="1" aria-label="weiter nach rechts">▶</button>
+        </div>
+      </div>
+      <div class="regler">
+        <div class="regler-kopf"><span>Kraft</span><output id="kraft-wert"></output></div>
+        <div class="regler-zeile">
+          <button class="leise rund" data-schritt="kraft" data-wert="-1" aria-label="weniger Kraft">−</button>
+          <input id="kraft" type="range" min="1" max="50" step="1">
+          <button class="leise rund" data-schritt="kraft" data-wert="1" aria-label="mehr Kraft">+</button>
+        </div>
+      </div>
+
+      <div id="munition" class="munitionswahl" aria-label="Munition"></div>
+
+      <p id="messwerte" class="messwerte" hidden></p>
+    </aside>
+  </div>
+
+  <dialog id="einstellungen">
+    <form method="dialog" class="einstellungen">
+      <h2>Probespiel</h2>
+      <label>Panzer
+        <select id="opt-anzahl">
+          <option>2</option><option>3</option><option selected>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option>
+        </select>
+      </label>
+      <label>Schießen
+        <select id="opt-modus">
+          <option value="salve" selected>Alle 3 Sekunden gemeinsam</option>
+          <option value="frei">Jeder selbst (Feuer-Knopf)</option>
+        </select>
+      </label>
+      <label class="haken"><input id="opt-computer" type="checkbox" checked> Andere Panzer steuert der Computer</label>
+      <label class="haken"><input id="opt-wind" type="checkbox" checked> Wind</label>
+      <label class="haken"><input id="opt-wetter" type="checkbox" checked> Wetter (Regen oder Schnee)</label>
+      <label class="haken"><input id="opt-sudden" type="checkbox" checked> Nach 2 Minuten Sudden Death</label>
+      <button value="start">Los geht's</button>
+    </form>
+  </dialog>
+  <script type="module" src="/js/probe.js"></script>
+</body>
+</html>

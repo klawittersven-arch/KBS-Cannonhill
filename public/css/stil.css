@@ -592,3 +592,307 @@ dialog .knoepfe {
     padding: 16px;
   }
 }
+
+/* ---------- Probespiel ---------- */
+
+body.probe {
+  background: #17212b;
+  color: #e9eef3;
+  overflow: hidden;
+  height: 100dvh;
+}
+
+.probe-raster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem);
+  height: 100dvh;
+}
+
+.spielflaeche {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#spiel {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.ende-anzeige {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  background: rgb(0 0 0 / 55%);
+  text-align: center;
+}
+
+.ende-anzeige .pokal {
+  font-size: clamp(3rem, 12vmin, 7rem);
+  line-height: 1;
+}
+
+.ende-anzeige p {
+  margin: 0;
+  font-size: clamp(1.4rem, 5vmin, 2.6rem);
+  font-weight: 800;
+}
+
+.steuerpult {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.7rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom)) 0.8rem;
+  padding-right: calc(0.8rem + env(safe-area-inset-right));
+  background: #1f2b38;
+  overflow-y: auto;
+}
+
+.pult-kopf {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pult-kopf .logo {
+  flex: 1;
+}
+
+body.probe button.leise {
+  background: #2c3b4b;
+  color: #e9eef3;
+  border-color: #3b4d60;
+}
+
+button.klein {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.panzerwahl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.panzerknopf {
+  background: #2c3b4b;
+  color: #e9eef3;
+  border: 2px solid transparent;
+  border-left: 8px solid var(--farbe);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.panzerknopf.gewaehlt {
+  border-color: var(--farbe);
+}
+
+.panzerknopf.tot {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.regler-kopf {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.regler-kopf output {
+  font-variant-numeric: tabular-nums;
+}
+
+.regler-zeile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.regler-zeile input[type='range'] {
+  width: 100%;
+  accent-color: var(--akzent);
+  height: 2rem;
+}
+
+button.rund {
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+.munitionswahl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3.2rem, 1fr));
+  gap: 0.3rem;
+}
+
+.munknopf {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 3rem;
+  padding: 0;
+  background: #2c3b4b;
+  border: 2px solid transparent;
+}
+
+.munknopf.gewaehlt {
+  border-color: var(--akzent);
+  background: #3b2a22;
+}
+
+.munbild {
+  width: 30px;
+  height: 30px;
+  background-image: url('/img/munition.png');
+  background-size: 390px 288px;
+  image-rendering: pixelated;
+}
+
+.munzahl {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.feuer-zeile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.salve-anzeige,
+.energie {
+  display: grid;
+  line-height: 1.1;
+}
+
+.salve-anzeige span {
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ff922b;
+}
+
+.energie {
+  text-align: right;
+}
+
+.energie span {
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.salve-anzeige small,
+.energie small {
+  color: #9fb0c2;
+}
+
+button.feuer {
+  font-size: 1.3rem;
+  padding: 0.9rem;
+}
+
+.messwerte {
+  font-size: 0.75rem;
+  color: #9fb0c2;
+  margin: 0;
+}
+
+.einstellungen {
+  display: grid;
+  gap: 0.8rem;
+  min-width: min(22rem, 80vw);
+}
+
+.einstellungen h2 {
+  margin: 0;
+}
+
+.einstellungen label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.einstellungen label.haken {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.einstellungen select {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--rand);
+}
+
+@media (orientation: portrait) {
+  .probe-raster {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  #spiel {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* Handy quer: wenig Höhe, alles etwas enger */
+@media (max-height: 520px) {
+  .steuerpult {
+    gap: 0.45rem;
+    padding-top: 0.5rem;
+  }
+
+  .pult-kopf .logo {
+    font-size: 0.9rem;
+  }
+
+  button.rund {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .regler-zeile input[type='range'] {
+    height: 1.6rem;
+  }
+
+  .munitionswahl {
+    grid-template-columns: repeat(auto-fill, minmax(2.7rem, 1fr));
+  }
+
+  .munknopf {
+    height: 2.5rem;
+  }
+
+  .salve-anzeige span {
+    font-size: 1.5rem;
+  }
+
+  .panzerknopf {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.8rem;
+  }
+}
