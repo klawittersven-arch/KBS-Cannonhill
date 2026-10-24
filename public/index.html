@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBS-Cannonhill</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/stil.css">
+</head>
+<body class="start">
+  <main>
+    <h1 class="logo">KBS-Cannonhill</h1>
+    <p class="tipp">Netztest für das Klassen-Turnier. Das Spiel folgt.</p>
+    <div class="start-raster">
+      <section class="karte">
+        <h2>Ich spiele mit</h2>
+        <form id="code-form" novalidate>
+          <label>Raumcode vom Beamer
+            <input id="code" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="z. B. 4711">
+          </label>
+          <button type="submit">Weiter</button>
+        </form>
+      </section>
+      <section class="karte">
+        <h2>Ich bin die Lehrkraft</h2>
+        <p>Öffnet einen Raum mit QR-Code für den Beamer.</p>
+        <a class="knopf" href="/beamer">Beamer-Ansicht öffnen</a>
+      </section>
+    </div>
+  </main>
+  <script type="module">
+    document.getElementById('code-form').addEventListener('submit', (ereignis) => {
+      ereignis.preventDefault();
+      const code = document.getElementById('code').value.trim();
+      if (/^\d{4}$/.test(code)) location.href = `/handy?raum=${code}`;
+    });
+  </script>
+</body>
+</html>

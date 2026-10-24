@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBS-Cannonhill · Beamer</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/stil.css">
+</head>
+<body class="beamer">
+  <div class="beamer-raster">
+    <aside class="seitenleiste">
+      <section class="karte beitritt">
+        <div class="logo">KBS-Cannonhill · Netztest</div>
+        <div id="qr" class="qr"></div>
+        <p class="url" id="beitritt-url"></p>
+        <div class="code" id="raumcode">····</div>
+      </section>
+
+      <section class="karte steuerung">
+        <h2>Steuerung <span id="verbindung" class="punkt" title="Verbindung zum Server"></span></h2>
+        <div class="zeile">
+          <label>Einteilung
+            <select id="modus">
+              <option value="auto">Automatisch</option>
+              <option value="direktfinale">Direkt ins Finale</option>
+              <option value="qualifying">Qualifying</option>
+            </select>
+          </label>
+          <label>Testdauer
+            <select id="dauer">
+              <option value="30">30 Sekunden</option>
+              <option value="60" selected>60 Sekunden</option>
+              <option value="120">2 Minuten</option>
+            </select>
+          </label>
+        </div>
+        <button id="start">Test starten</button>
+        <button id="stopp" class="leise" hidden>Test abbrechen</button>
+        <div class="zeile">
+          <button id="sperre" class="leise">Raum sperren</button>
+          <button id="aufraeumen" class="leise">Getrennte entfernen</button>
+        </div>
+        <div class="zeile">
+          <button id="bericht" class="leise">Ergebnis anzeigen</button>
+          <button id="neuer-raum" class="leise">Neuer Raum</button>
+        </div>
+        <p class="tipp">Kachel antippen, um ein Handy aus dem Raum zu nehmen.</p>
+      </section>
+    </aside>
+
+    <main class="hauptbereich">
+      <section class="karte uebersicht">
+        <div><div class="zahl" id="anzahl">0</div><div class="einheit">Handys verbunden</div></div>
+        <div class="plan" id="plan"></div>
+        <div id="test-anzeige" hidden><div class="countdown" id="rest"></div><div class="einheit" id="server-takt"></div></div>
+      </section>
+      <div id="meldung" class="meldung" hidden></div>
+      <section id="empfehlung" class="karte empfehlung" hidden>
+        <p class="titel" id="empfehlung-titel"></p>
+        <p class="details" id="empfehlung-details"></p>
+      </section>
+      <div id="spielerliste"></div>
+    </main>
+  </div>
+
+  <dialog id="bericht-dialog">
+    <h2>Ergebnis des Netztests</h2>
+    <p class="tipp">Ohne Namen – du kannst es direkt an Claude schicken.</p>
+    <textarea id="bericht-text" readonly></textarea>
+    <div class="knoepfe">
+      <button id="bericht-laden" class="leise">Als Datei speichern</button>
+      <button id="bericht-kopieren" class="leise">Kopieren</button>
+      <button id="bericht-schliessen">Schließen</button>
+    </div>
+  </dialog>
+  <script type="module" src="/js/beamer.js"></script>
+</body>
+</html>

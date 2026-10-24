@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Muss mit dem Namen des Workers im Cloudflare-Dashboard übereinstimmen.
+  "name": "kbs-cannonhill",
+  "main": "server/index.ts",
+  "compatibility_date": "2026-10-15",
+  // Webseiten (Beamer, Handy) kommen direkt aus public/.
+  // Nur /ws/<raumcode> landet im Worker-Code.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  // Ein Durable Object pro Klassenraum: hält alle WebSocket-Verbindungen
+  // und gibt im Netztest den Takt vor.
+  "durable_objects": {
+    "bindings": [{ "name": "RAUM", "class_name": "Raum" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Raum"] }]
+}
