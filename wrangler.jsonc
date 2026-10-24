@@ -4,6 +4,9 @@
   "name": "kbs-cannonhill",
   "main": "server/index.ts",
   "compatibility_date": "2026-10-15",
+  // Erreichbar unter kbs-cannonhill.<konto>.workers.dev; keine Vorschau-Adressen pro Version.
+  "workers_dev": true,
+  "preview_urls": false,
   // Webseiten (Beamer, Handy) kommen direkt aus public/.
   // Nur /ws/<raumcode> landet im Worker-Code.
   "assets": {
