@@ -4,7 +4,7 @@
 
 import {
   BREITE, HOEHE, LUFT, PANZER_B, PANZER_H, MUN_B, MUN_H, BALLON_B, BALLON_H,
-  MAX_LEBENSENERGIE, MUNITIONEN, RAUCH_RAUCH, RAUCH_FEUER, BILDER_PRO_SEKUNDE,
+  MAX_LEBENSENERGIE, MAX_SCHUSSENERGIE, MUNITIONEN, RAUCH_RAUCH, RAUCH_FEUER, BILDER_PRO_SEKUNDE,
   EXP_EXPLOSION, EXP_GRANATE, EXP_SPLITTER, SPIELERFARBEN,
 } from './regeln.js';
 
@@ -55,7 +55,7 @@ export class Zeichner {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {object} bilder  aus ladeBilder()
-   * @param {{namenPx?: number, eigeneNr?: number|null}} [optionen]
+   * @param {{namenPx?: number, eigeneNr?: number|null, kraftAnzeige?: 'eigene'|'alle'|'keine'}} [optionen]
    */
   constructor(canvas, bilder, optionen = {}) {
     this.canvas = canvas;
@@ -63,6 +63,7 @@ export class Zeichner {
     this.bilder = bilder;
     this.namenPx = optionen.namenPx ?? 8;
     this.eigeneNr = optionen.eigeneNr ?? null;
+    this.kraftAnzeige = optionen.kraftAnzeige ?? 'eigene';
 
     this.boden = leinwand(BREITE, HOEHE);
     this.bodenCtx = this.boden.getContext('2d');
@@ -281,7 +282,11 @@ export class Zeichner {
     for (const p of spiel.panzer) if (p.aktiv) this.zeichnePanzer(spiel, p);
     this.zeichneMunition(spiel);
     if (spiel.ballon.aktiv) ctx.drawImage(this.bilder.ballon, spiel.ballon.x, spiel.ballon.y);
-    for (const p of spiel.panzer) if (p.aktiv) this.zeichneName(p);
+    for (const p of spiel.panzer) {
+      if (!p.aktiv) continue;
+      this.zeichneName(p);
+      if (this.kraftAnzeige === 'alle' || (this.kraftAnzeige === 'eigene' && p.nr === this.eigeneNr)) this.zeichneKraft(p);
+    }
     this.zeichneAnzeige(spiel);
   }
 
@@ -338,6 +343,16 @@ export class Zeichner {
     ctx.drawImage(this.panzerBilder[p.bildNr], 0, p.version * PANZER_H, PANZER_B, PANZER_H, p.x - PANZER_B / 2, p.y - PANZER_H, PANZER_B, PANZER_H);
     if (p.schild > 0 && spiel.bild % 2 === 0) ctx.drawImage(this.bilder.panzer, 97, 0, 30, 15, p.x - 15, p.y - 14, 30, 15);
     if (p.magnet > 0) ctx.drawImage(this.bilder.panzer, 80, 3, 9, 12, p.x - 5, p.y - 13, 9, 12);
+  }
+
+  /** Kraftleiste unter dem Panzer – der Farbverlauf (POWER) aus dem Original, grün bis rot. */
+  zeichneKraft(p) {
+    const ctx = this.ctx;
+    const anteil = p.kraft / MAX_SCHUSSENERGIE;
+    const y = Math.min(p.y + 2, HOEHE - 5);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(p.x - 10, y, 20, 5);
+    ctx.drawImage(this.bilder.panzer, 80, 0, Math.max(1, Math.round(17 * anteil)), 3, p.x - 9, y + 1, 18 * anteil, 3);
   }
 
   zeichneName(p) {
