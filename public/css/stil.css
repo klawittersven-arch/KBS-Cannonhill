@@ -308,6 +308,14 @@ body.start main {
   margin-top: 0;
 }
 
+.urheber {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--gedimmt);
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
 .start-raster a.knopf {
   display: inline-block;
   text-decoration: none;
