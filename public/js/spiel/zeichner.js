@@ -15,6 +15,7 @@ const HIMMEL_OBEN = '#000000';
 const HIMMEL_UNTEN = '#0f1a2a';
 const UMRISS = [0, 0, 0, 230]; // dunkler Rand um Geschosse – vor Rauch, Feuer und Bergen
 const MUN_RAND = 1;
+const RAUCH_TOENUNG = 0.6; // Anteil der Spielerfarbe an der Rauchspur, der Rest bleibt grau
 const MUN_ZELLE_B = MUN_B + 2 * MUN_RAND;
 const MUN_ZELLE_H = MUN_H + 2 * MUN_RAND;
 const TAN_22 = 0.41421356; // tan(π/8)
@@ -196,13 +197,16 @@ export class Zeichner {
   nachBild(spiel) {
     for (const e of spiel.holeEreignisse()) this.ereignis(spiel, e);
 
-    // Rauch und Feuer hinter fliegenden Geschossen
+    // Rauch und Feuer hinter fliegenden Geschossen; der Rauch ist in der Farbe des
+    // Schützen getönt, damit man die eigene Flugbahn im Getümmel wiederfindet
     for (const m of spiel.mun) {
       if (m.besitzer === -1 || m.ausserhalb) continue;
+      const farbe = spiel.panzer[m.besitzer]?.farbe;
       for (const rauch of MUNITIONEN[m.typ].rauch) {
         if (rauch === RAUCH_RAUCH) {
-          const t = zufall(50);
-          this.neuesTeilchen(m.x - 2 + zufall(4), m.y - 2 + zufall(4), rgba(100 + t, 100 + t, 100 + t), 20 + zufall(10), spiel.wind / 5, -zufall(5) / 10);
+          const t = 100 + zufall(50);
+          const ton = farbe ? farbe.map((k) => Math.round(k * RAUCH_TOENUNG + t * (1 - RAUCH_TOENUNG))) : [t, t, t];
+          this.neuesTeilchen(m.x - 2 + zufall(4), m.y - 2 + zufall(4), rgba(...ton), 20 + zufall(10), spiel.wind / 5, -zufall(5) / 10);
         } else if (rauch === RAUCH_FEUER) {
           this.neuesTeilchen(m.x - 2 + zufall(4), m.y - 2 + zufall(4), rgba(235 + zufall(20), 235, 10), 5, 0, 0);
         }
