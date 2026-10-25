@@ -1,4 +1,4 @@
-// Anzeige einer Partie auf einem Canvas – mit den Original-Grafiken.
+// Anzeige einer Partie auf einem Canvas – mit den Original-Grafiken (außer dem Himmel).
 // Effekte (Flammen, Rauch, Trümmer, Laserstrahl) entstehen nur hier, mit dem
 // Zufall dieses Geräts; den Spielverlauf beeinflussen sie nicht.
 
@@ -9,6 +9,14 @@ import {
 } from './regeln.js';
 
 const MAX_FX = 10000;
+// Fast schwarzer Himmel: davor heben sich alle acht Spielerfarben deutlich ab
+// (Kontrast ≥ 4,5 : 1), auch auf einem blassen Beamer.
+const HIMMEL_OBEN = '#000000';
+const HIMMEL_UNTEN = '#0f1a2a';
+const UMRISS = [0, 0, 0, 230]; // dunkler Rand um Geschosse – vor Rauch, Feuer und Bergen
+const MUN_RAND = 1;
+const MUN_ZELLE_B = MUN_B + 2 * MUN_RAND;
+const MUN_ZELLE_H = MUN_H + 2 * MUN_RAND;
 const TAN_22 = 0.41421356; // tan(π/8)
 const TAN_67 = 2.41421356; // tan(3π/8)
 
@@ -21,10 +29,10 @@ export async function ladeBilder(basis = '/img/') {
       bild.onerror = () => fehler(new Error(`Bild fehlt: ${name}`));
       bild.src = basis + name;
     });
-  const [panzer, munition, fels, wind, ballon, h0, h1, h2] = await Promise.all(
-    ['panzer.png', 'munition.png', 'fels.png', 'wind.png', 'ballon.png', 'himmel0.jpg', 'himmel1.jpg', 'himmel2.jpg'].map(lade),
+  const [panzer, munition, fels, wind, ballon] = await Promise.all(
+    ['panzer.png', 'munition.png', 'fels.png', 'wind.png', 'ballon.png'].map(lade),
   );
-  return { panzer, munition, fels, wind, ballon, himmel: [h0, h1, h2] };
+  return { panzer, munition, fels, wind, ballon };
 }
 
 /** Steintextur als Pixelfeld – für die Farben der Felsen in der Landschaft. */
@@ -77,8 +85,12 @@ export class Zeichner {
     this.teilchen = [];
     this.altePixel = [];
 
+    this.himmel = this.ctx.createLinearGradient(0, 0, 0, HOEHE);
+    this.himmel.addColorStop(0, HIMMEL_OBEN);
+    this.himmel.addColorStop(1, HIMMEL_UNTEN);
     this.panzerBilder = this.baueFarbpanzer();
-    this.munitionsBilder = SPIELERFARBEN.map((farbe) => this.baueFarbmunition(farbe));
+    this.munitionsBilder = SPIELERFARBEN.map((farbe) => this.baueMunition(farbe));
+    this.munitionOhneFarbe = this.baueMunition(null);
     this.fetzDaten = {
       panzer: [0, 1, 2, 3].map((spalte) => [0, 1, 2].map((v) => pixelDaten(bilder.panzer, spalte * PANZER_B, v * PANZER_H, PANZER_B, PANZER_H))),
       mun: MUNITIONEN.map((m) => pixelDaten(bilder.munition, m.bild * MUN_B, 0, MUN_B, MUN_H)),
@@ -117,21 +129,52 @@ export class Zeichner {
 
   /**
    * Geschossbilder in Spielerfarbe: graue Teile (Kanonenkugel, Raketenkörper) werden
-   * eingefärbt, farbige Details bleiben – so erkennt man Waffe und Schützen.
+   * in einem etwas helleren Ton der Spielerfarbe eingefärbt, farbige Details bleiben –
+   * so erkennt man Waffe und Schützen. Jedes Bild bekommt einen dunklen Rand und dafür
+   * einen Pixel Platz ringsum (Zelle MUN_ZELLE_B × MUN_ZELLE_H). Ohne Farbe: nur der Rand.
    */
-  baueFarbmunition(ziel) {
-    const { width: b, height: h } = this.bilder.munition;
-    const d = pixelDaten(this.bilder.munition, 0, 0, b, h);
-    for (let p = 0; p < d.data.length; p += 4) {
-      const [r, g, bl, a] = [d.data[p], d.data[p + 1], d.data[p + 2], d.data[p + 3]];
-      if (a === 0 || Math.abs(r - g) > 40 || Math.abs(r - bl) > 40) continue;
-      const faktor = 0.45 + 0.75 * (Math.max(r, g, bl) / 255);
-      d.data[p] = Math.min(255, ziel[0] * faktor);
-      d.data[p + 1] = Math.min(255, ziel[1] * faktor);
-      d.data[p + 2] = Math.min(255, ziel[2] * faktor);
+  baueMunition(farbe) {
+    const ziel = farbe && farbe.map((k) => k + (255 - k) * 0.2);
+    const spalten = this.bilder.munition.width / MUN_B;
+    const d = pixelDaten(this.bilder.munition, 0, 0, spalten * MUN_B, 8 * MUN_H);
+    const q = d.data;
+    if (ziel) {
+      for (let p = 0; p < q.length; p += 4) {
+        const [r, g, bl, a] = [q[p], q[p + 1], q[p + 2], q[p + 3]];
+        if (a === 0 || Math.abs(r - g) > 40 || Math.abs(r - bl) > 40) continue;
+        const faktor = 0.45 + 0.75 * (Math.max(r, g, bl) / 255);
+        q[p] = Math.min(255, ziel[0] * faktor);
+        q[p + 1] = Math.min(255, ziel[1] * faktor);
+        q[p + 2] = Math.min(255, ziel[2] * faktor);
+      }
     }
-    const c = leinwand(b, h);
-    c.getContext('2d').putImageData(d, 0, 0);
+    const c = leinwand(spalten * MUN_ZELLE_B, 8 * MUN_ZELLE_H);
+    const ctx = c.getContext('2d');
+    const bild = ctx.createImageData(c.width, c.height);
+    const z = bild.data;
+    const deckend = (sx, sy, x, y) =>
+      x >= 0 && y >= 0 && x < MUN_B && y < MUN_H && q[((sy + y) * d.width + sx + x) * 4 + 3] > 0;
+    for (let zeile = 0; zeile < 8; zeile++) {
+      for (let spalte = 0; spalte < spalten; spalte++) {
+        const sx = spalte * MUN_B;
+        const sy = zeile * MUN_H;
+        for (let y = -MUN_RAND; y < MUN_H + MUN_RAND; y++) {
+          for (let x = -MUN_RAND; x < MUN_B + MUN_RAND; x++) {
+            const zp = ((zeile * MUN_ZELLE_H + y + MUN_RAND) * c.width + spalte * MUN_ZELLE_B + x + MUN_RAND) * 4;
+            if (deckend(sx, sy, x, y)) {
+              const qp = ((sy + y) * d.width + sx + x) * 4;
+              for (let k = 0; k < 4; k++) z[zp + k] = q[qp + k];
+            } else if (
+              deckend(sx, sy, x - 1, y) || deckend(sx, sy, x + 1, y) || deckend(sx, sy, x, y - 1) || deckend(sx, sy, x, y + 1) ||
+              deckend(sx, sy, x - 1, y - 1) || deckend(sx, sy, x + 1, y - 1) || deckend(sx, sy, x - 1, y + 1) || deckend(sx, sy, x + 1, y + 1)
+            ) {
+              for (let k = 0; k < 4; k++) z[zp + k] = UMRISS[k];
+            }
+          }
+        }
+      }
+    }
+    ctx.putImageData(bild, 0, 0);
     return c;
   }
 
@@ -272,10 +315,8 @@ export class Zeichner {
     const s = this.massstab;
     ctx.setTransform(s, 0, 0, s, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    // Himmelsbilder sind 640×480: davon ein Ausschnitt im Seitenverhältnis des Feldes
-    const himmel = this.bilder.himmel[spiel.himmel % 3];
-    const ausschnittH = (himmel.width * HOEHE) / BREITE;
-    ctx.drawImage(himmel, 0, (himmel.height - ausschnittH) / 2, himmel.width, ausschnittH, 0, 0, BREITE, HOEHE);
+    ctx.fillStyle = this.himmel;
+    ctx.fillRect(0, 0, BREITE, HOEHE);
     ctx.drawImage(this.boden, 0, 0);
     ctx.drawImage(this.fx, 0, 0);
 
@@ -403,8 +444,11 @@ export class Zeichner {
       }
       const spalte = MUNITIONEN[m.typ].bild;
       const schuetze = spiel.panzer[m.besitzer];
-      const bogen = schuetze ? this.munitionsBilder[schuetze.bildNr] : this.bilder.munition;
-      ctx.drawImage(bogen, spalte * MUN_B, richtung(m.vx, m.vy) * MUN_H, MUN_B, MUN_H, m.x - MUN_B / 2, m.y - MUN_H / 2, MUN_B, MUN_H);
+      const bogen = schuetze ? this.munitionsBilder[schuetze.bildNr] : this.munitionOhneFarbe;
+      ctx.drawImage(
+        bogen, spalte * MUN_ZELLE_B, richtung(m.vx, m.vy) * MUN_ZELLE_H, MUN_ZELLE_B, MUN_ZELLE_H,
+        m.x - MUN_B / 2 - MUN_RAND, m.y - MUN_H / 2 - MUN_RAND, MUN_ZELLE_B, MUN_ZELLE_H,
+      );
     }
   }
 
