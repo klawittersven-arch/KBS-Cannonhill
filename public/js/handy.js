@@ -63,6 +63,7 @@ $('anmelde-form').addEventListener('submit', (ereignis) => {
   speicher.schreib('kbs-vorname', vorname);
   speicher.schreib('kbs-initial', initial);
   zustand.id = speicher.lies(`kbs-id-${raum}`) || neueId();
+  if (vollbildApi) vollbildAn(); // der Fingertipp auf „Los geht's“ erlaubt das Vollbild
   halteWach();
   tritBei(vorname, initial);
 });
@@ -167,6 +168,8 @@ function zeige(ansicht) {
   $('spielansicht').hidden = !imSpiel;
   for (const id of ['anmeldung', 'lobby', 'info']) $(id).hidden = id !== ansicht;
   if (imSpiel) zustand.zeichner?.passeGroesseAn();
+  zeigeVollbildKnoepfe();
+  dreheQuer(imSpiel);
 }
 
 // --- Die eigene Partie ---------------------------------------------------------------
@@ -308,6 +311,7 @@ function aktualisiereAnzeige(spiel) {
   }
 
   // Hinweise über dem Spielfeld
+  $('hinweis-vollbild').hidden = !(vorStart && vollbildNoetig());
   const e = zustand.ergebnis;
   if (vorStart) {
     hinweis('🎯', 'Gleich geht\'s los!', 'Winkel und Kraft einstellen – alle 3 Sekunden wird automatisch gefeuert.');
@@ -328,6 +332,60 @@ function hinweis(bild, titel, text) {
   $('hinweis-text').textContent = text;
   $('spiel-hinweis').hidden = false;
 }
+
+// --- Vollbild -------------------------------------------------------------------------------
+// Browser erlauben Vollbild nur nach einem Fingertipp. Android/Chrome: requestFullscreen.
+// iPhone: Safari kann das nicht – dort hilft nur „Zum Home-Bildschirm“ (siehe manifest).
+
+const vollbildApi = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const alsApp = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+const iPhone = /iPhone|iPod/.test(navigator.userAgent);
+
+function imVollbild() {
+  return alsApp || !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+function vollbildNoetig() {
+  return !imVollbild() && (vollbildApi || iPhone);
+}
+
+/** Muss direkt aus einem Fingertipp heraus aufgerufen werden. */
+function vollbildAn() {
+  if (imVollbild()) return;
+  if (!vollbildApi) {
+    if (iPhone) $('iphone-hilfe').showModal();
+    return;
+  }
+  const wurzel = document.documentElement;
+  const anfrage = wurzel.requestFullscreen ? wurzel.requestFullscreen({ navigationUI: 'hide' }) : wurzel.webkitRequestFullscreen?.();
+  Promise.resolve(anfrage)
+    .then(() => dreheQuer(!$('spielansicht').hidden))
+    .catch(() => {});
+}
+
+function zeigeVollbildKnoepfe() {
+  const noetig = vollbildNoetig();
+  document.querySelectorAll('[data-vollbild]').forEach((knopf) => {
+    if (knopf.id !== 'hinweis-vollbild') knopf.hidden = !noetig;
+  });
+}
+
+/** Im Spiel quer drehen (geht nur im Vollbild, z. B. auf Android). */
+function dreheQuer(an) {
+  try {
+    if (an && document.fullscreenElement) screen.orientation?.lock?.('landscape')?.catch?.(() => {});
+    else if (!an) screen.orientation?.unlock?.();
+  } catch {
+    // nicht unterstützt
+  }
+}
+
+document.querySelectorAll('[data-vollbild]').forEach((knopf) => knopf.addEventListener('click', vollbildAn));
+if (!vollbildApi && iPhone) {
+  document.querySelectorAll('.vollbild-knopf').forEach((knopf) => (knopf.textContent = '⛶ Vollbild auf dem iPhone'));
+}
+document.addEventListener('fullscreenchange', zeigeVollbildKnoepfe);
+document.addEventListener('webkitfullscreenchange', zeigeVollbildKnoepfe);
 
 // --- Verbindung wach halten -----------------------------------------------------------
 

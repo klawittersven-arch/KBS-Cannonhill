@@ -6,6 +6,12 @@
   <meta name="theme-color" content="#17212b">
   <title>KBS-Cannonhill</title>
   <link rel="icon" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/img/app-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cannonhill">
   <link rel="stylesheet" href="/css/stil.css">
 </head>
 <body class="handy">
@@ -36,6 +42,7 @@
     <section id="lobby" hidden>
       <h1>Hallo <span class="mein-name"></span>!</h1>
       <p class="gross" id="lobby-text">Du bist drin. Gleich geht's los – schau auf den Beamer.</p>
+      <button class="vollbild-knopf" data-vollbild hidden>⛶ Vollbild an</button>
       <p class="tipp">Lass diese Seite offen. Zum Spielen das Handy am besten <strong>quer</strong> halten.</p>
     </section>
 
@@ -53,12 +60,14 @@
         <div id="hinweis-bild" class="pokal" aria-hidden="true"></div>
         <p id="hinweis-titel"></p>
         <small id="hinweis-text"></small>
+        <button id="hinweis-vollbild" class="vollbild-knopf" data-vollbild hidden>⛶ Vollbild an</button>
       </div>
     </div>
     <aside class="steuerpult">
       <div class="spielkopf">
         <strong id="partie-name"></strong>
         <span id="meine-farbe" class="meine-farbe"></span>
+        <button class="leise klein" data-vollbild title="Vollbild" aria-label="Vollbild" hidden>⛶</button>
       </div>
       <div class="feuer-zeile">
         <div class="salve-anzeige"><span id="salve-zahl">–</span><small>bis zur Salve</small></div>
@@ -83,6 +92,16 @@
       <div id="munition" class="munitionswahl" aria-label="Munition" hidden></div>
     </aside>
   </div>
+  <dialog id="iphone-hilfe">
+    <h2>Vollbild auf dem iPhone</h2>
+    <p>Auf dem iPhone erlaubt Safari Webseiten kein Vollbild. So geht es trotzdem:</p>
+    <ol>
+      <li>Unten auf <strong>Teilen</strong> tippen (Quadrat mit Pfeil nach oben).</li>
+      <li><strong>„Zum Home-Bildschirm“</strong> wählen und hinzufügen.</li>
+      <li>Cannonhill dann über das neue Symbol auf dem Home-Bildschirm öffnen und den Raumcode vom Beamer eingeben.</li>
+    </ol>
+    <form method="dialog"><button>Verstanden</button></form>
+  </dialog>
   <script type="module" src="/js/handy.js"></script>
 </body>
 </html>

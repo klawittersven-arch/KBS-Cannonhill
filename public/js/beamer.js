@@ -122,6 +122,18 @@ document.querySelectorAll('.abbrechen').forEach((knopf) =>
   }),
 );
 $('neues-turnier').addEventListener('click', () => sende({ typ: 'neu' }));
+// Vollbild für den Beamer (statt F11)
+const imVollbild = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+document.querySelectorAll('[data-vollbild]').forEach((knopf) =>
+  knopf.addEventListener('click', () => {
+    const wurzel = document.documentElement;
+    if (imVollbild()) document.exitFullscreen?.();
+    else (wurzel.requestFullscreen ? wurzel.requestFullscreen() : wurzel.webkitRequestFullscreen?.())?.catch?.(() => {});
+  }),
+);
+document.addEventListener('fullscreenchange', () =>
+  document.querySelectorAll('[data-vollbild]').forEach((k) => (k.textContent = imVollbild() ? '⛶ Vollbild aus' : '⛶ Vollbild')),
+);
 $('sperre').addEventListener('click', () => sende({ typ: 'sperre', wert: !stand?.gesperrt }));
 $('aufraeumen').addEventListener('click', () => sende({ typ: 'aufraeumen' }));
 $('neuer-raum').addEventListener('click', () => {

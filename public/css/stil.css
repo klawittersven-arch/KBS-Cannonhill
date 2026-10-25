@@ -1235,3 +1235,45 @@ body.vollbild {
     animation: none;
   }
 }
+
+/* ---------- Vollbild ---------- */
+
+.vollbild-knopf {
+  display: block;
+  width: 100%;
+  margin: 1rem 0;
+  padding: 1.1rem;
+  font-size: 1.4rem;
+  box-shadow: 0 0 0 0 rgb(217 72 15 / 60%);
+  animation: puls 1.8s infinite;
+}
+
+.ende-anzeige .vollbild-knopf {
+  width: auto;
+  padding: 0.9rem 1.6rem;
+}
+
+@keyframes puls {
+  70% {
+    box-shadow: 0 0 0 14px rgb(217 72 15 / 0%);
+  }
+}
+
+#iphone-hilfe {
+  max-width: 26rem;
+}
+
+#iphone-hilfe ol {
+  padding-left: 1.2rem;
+  line-height: 1.5;
+}
+
+#iphone-hilfe button {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vollbild-knopf {
+    animation: none;
+  }
+}
