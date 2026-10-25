@@ -298,6 +298,13 @@ body.start main {
   padding: 32px 16px;
 }
 
+.start-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .start-raster {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
@@ -437,6 +444,16 @@ body.beamer {
 .uebersicht .plan {
   flex: 1 1 20rem;
   font-weight: 600;
+}
+
+.schullogo {
+  display: block;
+  width: auto;
+  height: 4.5rem;
+}
+
+.uebersicht .schullogo {
+  margin-left: auto;
 }
 
 .uebersicht .countdown {
