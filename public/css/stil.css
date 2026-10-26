@@ -35,6 +35,29 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* iPhone (Safari): zwei schnelle Berührungen, etwa auf ◀ ▶ − +, zoomen sonst ins Bild.
+   manipulation verbietet nur das Doppeltipp-Zoomen; Scrollen und Zoomen mit zwei Fingern gehen weiter.
+   Für alle Elemente, weil Safari die Einstellung nicht in scrollbare Bereiche (z. B. das Steuerpult) weitergibt. */
+* {
+  touch-action: manipulation;
+}
+
+/* iPhone (Safari): langes Drücken markiert auf den Handy-Seiten sonst Text und öffnet „Kopieren/Ausschneiden“.
+   Eingabefelder bleiben normal bedienbar. */
+body.handy,
+body.probe {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+body.handy input,
+body.probe input {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 h1 {
   font-size: 1.6rem;
   line-height: 1.2;

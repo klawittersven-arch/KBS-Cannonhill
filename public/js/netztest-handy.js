@@ -4,6 +4,9 @@ import {
   neueWelt, spieleTakt, pruefsumme, leistungstest, matheFingerabdruck,
 } from './sim.js';
 import { bewerte, median, perzentil } from './bewertung.js';
+import { schuetzeVorZoomUndMarkieren } from './iphone.js';
+
+schuetzeVorZoomUndMarkieren(); // iPhone: kein Doppeltipp-Zoom, kein Markieren beim Spielen
 
 const $ = (id) => document.getElementById(id);
 const ABSCHNITTE = ['anmeldung', 'lobby', 'test', 'fertig', 'meldung'];
