@@ -6,6 +6,9 @@ import {
   BILDER_PRO_SEKUNDE, BILDER_PRO_TAKT, KANONE, KANONE_SENKRECHT, MUNITIONEN, M_SPLITTER, M_STEIN,
   M_RAKETE, M_GRANATE, M_SCHNEEBALL, M_FASS, MAX_LEBENSENERGIE, SPIELERFARBEN,
 } from './spiel/regeln.js';
+import { schuetzeVorZoomUndMarkieren } from './iphone.js';
+
+schuetzeVorZoomUndMarkieren(); // iPhone: kein Doppeltipp-Zoom, kein Markieren beim Spielen
 
 const $ = (id) => document.getElementById(id);
 const NAMEN = ['Rot', 'Grün', 'Blau', 'Gelb', 'Orange', 'Lila', 'Türkis', 'Pink'];

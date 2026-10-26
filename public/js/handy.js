@@ -4,6 +4,9 @@ import { verbinde, neueId, speicher } from './verbindung.js';
 import { NetzSpiel } from './spiel/netzspiel.js';
 import { Zeichner, ladeBilder, steinTextur } from './spiel/zeichner.js';
 import { KANONE, MUNITIONEN, M_SPLITTER, MAX_LEBENSENERGIE, BILDER_PRO_SEKUNDE, SPIELERFARBEN } from './spiel/regeln.js';
+import { schuetzeVorZoomUndMarkieren } from './iphone.js';
+
+schuetzeVorZoomUndMarkieren(); // iPhone: kein Doppeltipp-Zoom, kein Markieren beim Spielen
 
 const $ = (id) => document.getElementById(id);
 const NAME_MUSTER = /^\p{L}[\p{L}' -]{0,14}$/u;
